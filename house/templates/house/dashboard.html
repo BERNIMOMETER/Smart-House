@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart House</title><script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+<main class="mx-auto max-w-7xl px-5 py-8">
+  <header class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div><p class="text-sm font-semibold uppercase tracking-[.25em] text-cyan-400">IoT dashboard</p><h1 class="text-3xl font-bold">Smart House</h1></div>
+    <div class="rounded-xl border px-4 py-3 {{ system.security_mode|yesno:'border-rose-500 bg-rose-950,border-slate-700 bg-slate-900' }}">
+      <p class="text-xs uppercase tracking-widest text-slate-400">Security mode</p>
+      <p class="font-bold">{{ system.security_mode|yesno:'ARMED,DISARMED' }}</p>
+      <form method="post" action="{% url 'set_security_mode' %}" class="mt-2">{% csrf_token %}
+        <input type="hidden" name="enabled" value="{{ system.security_mode|yesno:'0,1' }}">
+        <button class="rounded bg-cyan-500 px-3 py-1 text-sm font-bold text-slate-950">{{ system.security_mode|yesno:'Disarm,Arm' }}</button>
+      </form>
+    </div>
+  </header>
+  {% for message in messages %}<div class="mb-4 rounded border border-cyan-500/50 bg-cyan-950 px-4 py-3">{{ message }}</div>{% endfor %}
+
+  <section class="grid gap-5 lg:grid-cols-3">
+    <article class="rounded-2xl border border-slate-800 bg-slate-900 p-5"><h2 class="text-xl font-bold">Kitchen + living</h2>
+      <p class="mt-3 text-sm text-slate-400">Smoke: {{ status.kitchen_living_mq2.value.state|default:'No report' }}</p>
+      <p class="text-sm text-slate-400">Exhaust fan: {{ status.kitchen_living_fan.value.state|default:'No report' }}</p>
+      <p class="text-sm text-slate-400">Buzzer: {{ status.kitchen_living_buzzer.value.state|default:'No report' }}</p>
+      <p class="mb-3 text-sm text-slate-400">Living motion: {{ status.kitchen_living_pir.value.state|default:'No report' }}</p>
+      {% include 'house/control.html' with zone='kitchen_living' device='living_led' title='Living light' state=status.kitchen_living_living_led.value.state auto=False %}
+    </article>
+    <article class="rounded-2xl border border-slate-800 bg-slate-900 p-5"><h2 class="text-xl font-bold">Bedroom</h2>
+      <p class="mt-3 text-sm text-slate-400">DHT11: {{ status.bedroom_dht11.value.temp|default:'--' }}°C / {{ status.bedroom_dht11.value.humidity|default:'--' }}% RH</p>
+      {% include 'house/control.html' with zone='bedroom' device='fan' title='Fan (auto at ≥ 30°C)' state=status.bedroom_fan.value.state auto=True %}
+      {% include 'house/control.html' with zone='bedroom' device='led' title='Bedroom light' state=status.bedroom_led.value.state auto=False %}
+    </article>
+    <article class="rounded-2xl border border-slate-800 bg-slate-900 p-5"><h2 class="text-xl font-bold">Entrance</h2>
+      <p class="mt-3 text-sm text-slate-400">Ambient light: {{ status.entrance_ldr.value.raw|default:'No report' }}</p>
+      <p class="mb-3 text-sm text-slate-400">Entrance motion: {{ status.entrance_pir.value.state|default:'No report' }}</p>
+      {% include 'house/control.html' with zone='entrance' device='outdoor_led' title='Outdoor light' state=status.entrance_outdoor_led.value.state auto=True %}
+      {% include 'house/control.html' with zone='entrance' device='door' title='Door lock' state=status.entrance_door.value.state door=True %}
+    </article>
+  </section>
+  <section class="mt-5 grid gap-5 lg:grid-cols-2">
+    <article class="rounded-2xl border border-slate-800 bg-slate-900 p-5"><h2 class="text-xl font-bold">NFC audit log</h2>
+      <div class="mt-3 max-h-64 overflow-auto text-sm">{% for log in nfc_logs %}<p class="border-b border-slate-800 py-2"><span class="font-mono">{{ log.tag_id }}</span> · {{ log.granted|yesno:'Granted,Denied' }} · {{ log.created_at|date:'Y-m-d H:i:s' }}{% if log.note %} · {{ log.note }}{% endif %}</p>{% empty %}<p class="text-slate-400">No NFC reads yet.</p>{% endfor %}</div>
+    </article>
+    <article class="rounded-2xl border border-slate-800 bg-slate-900 p-5"><h2 class="text-xl font-bold">Add NFC audit entry</h2>
+      <form method="post" action="{% url 'add_nfc_log' %}" class="mt-3 grid gap-3">{% csrf_token %}
+        <input required name="tag_id" placeholder="Tag ID" class="rounded bg-slate-800 p-2"><input name="note" placeholder="Note (optional)" class="rounded bg-slate-800 p-2">
+        <select name="granted" class="rounded bg-slate-800 p-2"><option value="1">Granted</option><option value="0">Denied</option></select><button class="rounded bg-cyan-500 p-2 font-bold text-slate-950">Save log</button>
+      </form>
+    </article>
+  </section>
+</main></body></html>

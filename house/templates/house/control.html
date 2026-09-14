@@ -1,0 +1,9 @@
+<div class="mb-4 rounded-lg bg-slate-800/80 p-3"><p class="mb-1 text-sm font-semibold">{{ title }}</p><p class="mb-2 text-xs text-slate-400">Reported: {{ state|default:'No report' }}</p>
+  <div class="flex flex-wrap gap-2">{% if door %}
+    <form method="post" action="{% url 'control_device' %}">{% csrf_token %}<input type="hidden" name="zone" value="{{ zone }}"><input type="hidden" name="device" value="{{ device }}"><input type="hidden" name="command" value="OPEN"><button class="rounded bg-cyan-500 px-3 py-1 text-sm font-bold text-slate-950">Open 4 sec</button></form>
+  {% else %}
+    <form method="post" action="{% url 'control_device' %}">{% csrf_token %}<input type="hidden" name="zone" value="{{ zone }}"><input type="hidden" name="device" value="{{ device }}"><input type="hidden" name="command" value="ON"><button class="rounded bg-slate-700 px-3 py-1 text-sm hover:bg-cyan-500 hover:text-slate-950">ON</button></form>
+    <form method="post" action="{% url 'control_device' %}">{% csrf_token %}<input type="hidden" name="zone" value="{{ zone }}"><input type="hidden" name="device" value="{{ device }}"><input type="hidden" name="command" value="OFF"><button class="rounded bg-slate-700 px-3 py-1 text-sm hover:bg-cyan-500 hover:text-slate-950">OFF</button></form>
+    {% if auto %}<form method="post" action="{% url 'control_device' %}">{% csrf_token %}<input type="hidden" name="zone" value="{{ zone }}"><input type="hidden" name="device" value="{{ device }}"><input type="hidden" name="command" value="AUTO"><button class="rounded bg-slate-700 px-3 py-1 text-sm hover:bg-cyan-500 hover:text-slate-950">AUTO</button></form>{% endif %}
+  {% endif %}</div>
+</div>
