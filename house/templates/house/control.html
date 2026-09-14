@@ -1,9 +1,37 @@
-<div class="mb-4 rounded-lg bg-slate-800/80 p-3"><p class="mb-1 text-sm font-semibold">{{ title }}</p><p class="mb-2 text-xs text-slate-400">Reported: {{ state|default:'No report' }}</p>
-  <div class="flex flex-wrap gap-2">{% if door %}
-    <form method="post" action="{% url 'control_device' %}">{% csrf_token %}<input type="hidden" name="zone" value="{{ zone }}"><input type="hidden" name="device" value="{{ device }}"><input type="hidden" name="command" value="OPEN"><button class="rounded bg-cyan-500 px-3 py-1 text-sm font-bold text-slate-950">Open 4 sec</button></form>
-  {% else %}
-    <form method="post" action="{% url 'control_device' %}">{% csrf_token %}<input type="hidden" name="zone" value="{{ zone }}"><input type="hidden" name="device" value="{{ device }}"><input type="hidden" name="command" value="ON"><button class="rounded bg-slate-700 px-3 py-1 text-sm hover:bg-cyan-500 hover:text-slate-950">ON</button></form>
-    <form method="post" action="{% url 'control_device' %}">{% csrf_token %}<input type="hidden" name="zone" value="{{ zone }}"><input type="hidden" name="device" value="{{ device }}"><input type="hidden" name="command" value="OFF"><button class="rounded bg-slate-700 px-3 py-1 text-sm hover:bg-cyan-500 hover:text-slate-950">OFF</button></form>
-    {% if auto %}<form method="post" action="{% url 'control_device' %}">{% csrf_token %}<input type="hidden" name="zone" value="{{ zone }}"><input type="hidden" name="device" value="{{ device }}"><input type="hidden" name="command" value="AUTO"><button class="rounded bg-slate-700 px-3 py-1 text-sm hover:bg-cyan-500 hover:text-slate-950">AUTO</button></form>{% endif %}
-  {% endif %}</div>
+<div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/50">
+  <div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ title }}</p>
+    <p class="font-mono text-xs text-slate-500 dark:text-slate-400">Reported: <span class="font-sans font-semibold {% if state %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ state|default:'No report' }}</span></p>
+  </div>
+  <div class="mt-3 flex flex-wrap gap-2">
+    {% if door %}
+      <form method="post" action="{% url 'control_device' %}">{% csrf_token %}
+        <input type="hidden" name="zone" value="{{ zone }}">
+        <input type="hidden" name="device" value="{{ device }}">
+        <input type="hidden" name="command" value="OPEN">
+        <button aria-label="Open door for four seconds" class="min-h-11 rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900">Open for 4 sec</button>
+      </form>
+    {% else %}
+      <form method="post" action="{% url 'control_device' %}">{% csrf_token %}
+        <input type="hidden" name="zone" value="{{ zone }}">
+        <input type="hidden" name="device" value="{{ device }}">
+        <input type="hidden" name="command" value="ON">
+        <button aria-label="Turn {{ title }} on" aria-pressed="{% if state == 'ON' %}true{% else %}false{% endif %}" class="min-h-11 min-w-11 rounded-lg border px-4 py-2 font-mono text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900 {% if state == 'ON' %}border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500{% else %}border-slate-200 bg-white text-slate-600 hover:border-blue-600 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:bg-slate-800{% endif %}">ON</button>
+      </form>
+      <form method="post" action="{% url 'control_device' %}">{% csrf_token %}
+        <input type="hidden" name="zone" value="{{ zone }}">
+        <input type="hidden" name="device" value="{{ device }}">
+        <input type="hidden" name="command" value="OFF">
+        <button aria-label="Turn {{ title }} off" aria-pressed="{% if state == 'OFF' %}true{% else %}false{% endif %}" class="min-h-11 min-w-11 rounded-lg border px-4 py-2 font-mono text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900 {% if state == 'OFF' %}border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500{% else %}border-slate-200 bg-white text-slate-600 hover:border-blue-600 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:bg-slate-800{% endif %}">OFF</button>
+      </form>
+      {% if auto %}
+        <form method="post" action="{% url 'control_device' %}">{% csrf_token %}
+          <input type="hidden" name="zone" value="{{ zone }}">
+          <input type="hidden" name="device" value="{{ device }}">
+          <input type="hidden" name="command" value="AUTO">
+          <button aria-label="Set {{ title }} to automatic mode" aria-pressed="{% if state and not manual_override %}true{% else %}false{% endif %}" class="min-h-11 min-w-11 rounded-lg border px-4 py-2 font-mono text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900 {% if state and not manual_override %}border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500{% else %}border-slate-200 bg-white text-slate-600 hover:border-blue-600 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:bg-slate-800{% endif %}">AUTO</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
 </div>
