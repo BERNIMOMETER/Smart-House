@@ -1,6 +1,6 @@
 # Smart House IoT/MQTT System
 
-A Django dashboard plus three ESP32 nodes for a kitchen/living area, bedroom, and entrance. Django persists device-reported state in SQLite; MQTT transports commands and sensor reports.
+A Django dashboard plus one ESP32-S3 controller for a kitchen/living area, bedroom, and entrance. Django persists device-reported state in SQLite; MQTT transports commands and sensor reports.
 
 ## Behaviour locked into this project
 
@@ -64,13 +64,7 @@ Payloads are `ON`, `OFF`, `AUTO`, or `OPEN` for actuator commands. Sensor payloa
 
 ## ESP32 setup
 
-Copy [firmware/config.example.h](firmware/config.example.h) to `firmware/config.h` and set Wi-Fi and broker values; `config.h` is ignored by Git. Open and flash one sketch per node:
-
-- `firmware/kitchen_living/kitchen_living.ino`
-- `firmware/bedroom/bedroom.ino`
-- `firmware/entrance/entrance.ino`
-
-Adjust pin constants and thresholds at the top of each sketch for the real wiring. Install these Arduino libraries: **PubSubClient**, **DHT sensor library**, **MFRC522**, and **ESP32Servo**. Replace `REPLACE_WITH_AUTHORISED_UID` in the entrance sketch with an authorised NFC UID before using its reader.
+Copy [firmware/config.example.h](firmware/config.example.h) to `firmware/config.h` and set Wi-Fi and broker values; `config.h` is ignored by Git. Open and flash [firmware/smarthouse/smarthouse.ino](firmware/smarthouse/smarthouse.ino) to the single ESP32-S3. Install **PubSubClient**, **DHT sensor library**, **MFRC522**, and **ESP32Servo**. The complete pin map, wiring constraints, and NFC setup are documented in [firmware/README.md](firmware/README.md).
 
 ## PythonAnywhere
 
