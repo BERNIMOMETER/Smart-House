@@ -1,10 +1,14 @@
 #include <WiFi.h>
+#include "../config.h"
+#if MQTT_TLS
+#include <WiFiClientSecure.h>
+#include <time.h>
+#endif
 #include <PubSubClient.h>
 #include <DHT.h>
 #include <SPI.h>
 #include <MFRC522.h>
 #include <ESP32Servo.h>
-#include "../config.h"
 
 // ESP32-S3 pin map for the single-controller installation.
 // All pins below (1,2,4-18) are outside the strapping (0/3/45/46), native-USB
@@ -57,8 +61,12 @@ constexpr unsigned long NFC_DEBOUNCE_MS = 3000;
 // Replace this value with the lowercase hexadecimal UID of the authorised tag.
 const char *AUTHORISED_UID = "REPLACE_WITH_AUTHORISED_UID";
 
-WiFiClient wifiClient;
-PubSubClient mqtt(wifiClient);
+#if MQTT_TLS
+WiFiClientSecure mqttTransport;
+#else
+WiFiClient mqttTransport;
+#endif
+PubSubClient mqtt(mqttTransport);
 DHT dht(DHT_PIN, DHT_TYPE);
 MFRC522 rfid(RFID_SS_PIN, RFID_RST_PIN);
 Servo door;
@@ -84,10 +92,31 @@ String lastNfcUid = "";
 unsigned long lastNfcMillis = 0;
 
 void publishState(const char *zone, const char *device, const char *value, bool retained = true) {
-  char topic[96];
-  snprintf(topic, sizeof(topic), "smarthouse/%s/%s/state", zone, device);
+  char topic[160];
+  snprintf(topic, sizeof(topic), "%s/%s/%s/state", MQTT_TOPIC_PREFIX, zone, device);
   mqtt.publish(topic, value, retained);
 }
+
+String commandTopic(const char *zone, const char *device) {
+  return String(MQTT_TOPIC_PREFIX) + "/" + zone + "/" + device + "/set";
+}
+
+#if MQTT_TLS
+void synchroniseClockForTls() {
+  configTime(0, 0, NTP_SERVER);
+  struct tm timeInfo;
+  for (int attempt = 0; attempt < 20; ++attempt) {
+    if (getLocalTime(&timeInfo, 500)) {
+      Serial.println("NTP clock synchronized for TLS");
+      return;
+    }
+    delay(500);
+  }
+  // NTP continues in the background. MQTT retries will begin succeeding once
+  // the clock is set; certificate validation is never disabled as a fallback.
+  Serial.println("NTP clock not ready; MQTT TLS will retry after synchronization");
+}
+#endif
 
 void publishBool(const char *zone, const char *device, bool value) {
   publishState(zone, device, value ? "ON" : "OFF");
@@ -149,20 +178,20 @@ void onMessage(char *topic, byte *payload, unsigned int length) {
   for (unsigned int index = 0; index < length; ++index) value += (char)payload[index];
   String topicName(topic);
 
-  if (topicName == "smarthouse/system/security_mode/set") {
+  if (topicName == commandTopic("system", "security_mode")) {
     handleSecurityMode(value);
-  } else if (topicName == "smarthouse/bedroom/fan/set") {
+  } else if (topicName == commandTopic("bedroom", "fan")) {
     if (value == "AUTO") bedroomFanManual = false;
     else { bedroomFanManual = true; setBedroomFan(value == "ON"); }
-  } else if (topicName == "smarthouse/bedroom/led/set") {
+  } else if (topicName == commandTopic("bedroom", "led")) {
     if (value == "AUTO") bedroomLedManual = false;
     else { bedroomLedManual = true; setBedroomLed(value == "ON"); }
-  } else if (topicName == "smarthouse/kitchen_living/living_led/set") {
+  } else if (topicName == commandTopic("kitchen_living", "living_led")) {
     setLivingLed(value == "ON");
-  } else if (topicName == "smarthouse/entrance/outdoor_led/set") {
+  } else if (topicName == commandTopic("entrance", "outdoor_led")) {
     if (value == "AUTO") outdoorLedManual = false;
     else { outdoorLedManual = true; setOutdoorLed(value == "ON"); }
-  } else if (topicName == "smarthouse/entrance/door/set" && value == "OPEN") {
+  } else if (topicName == commandTopic("entrance", "door") && value == "OPEN") {
     openDoor();
   }
 }
@@ -176,13 +205,13 @@ void maintainMqtt() {
   if (now - lastMqttAttempt < MQTT_RETRY_INTERVAL_MS) return;
   lastMqttAttempt = now;
 
-  if (mqtt.connect("smarthouse-esp32-s3", MQTT_USER, MQTT_PASSWORD)) {
-    mqtt.subscribe("smarthouse/system/security_mode/set");
-    mqtt.subscribe("smarthouse/bedroom/fan/set");
-    mqtt.subscribe("smarthouse/bedroom/led/set");
-    mqtt.subscribe("smarthouse/kitchen_living/living_led/set");
-    mqtt.subscribe("smarthouse/entrance/outdoor_led/set");
-    mqtt.subscribe("smarthouse/entrance/door/set");
+  if (mqtt.connect(MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD)) {
+    mqtt.subscribe(commandTopic("system", "security_mode").c_str());
+    mqtt.subscribe(commandTopic("bedroom", "fan").c_str());
+    mqtt.subscribe(commandTopic("bedroom", "led").c_str());
+    mqtt.subscribe(commandTopic("kitchen_living", "living_led").c_str());
+    mqtt.subscribe(commandTopic("entrance", "outdoor_led").c_str());
+    mqtt.subscribe(commandTopic("entrance", "door").c_str());
     publishState("system", "security_mode", securityMode ? "ON" : "OFF");
     publishBool("bedroom", "fan", bedroomFan);
     publishBool("bedroom", "led", bedroomLed);
@@ -190,6 +219,8 @@ void maintainMqtt() {
     publishBool("kitchen_living", "fan", smokeAlarm);
     publishBool("entrance", "outdoor_led", outdoorLed);
     publishBool("kitchen_living", "buzzer", buzzer);
+  } else {
+    Serial.printf("MQTT connect failed, state=%d\n", mqtt.state());
   }
 }
 
@@ -320,6 +351,9 @@ void readMotion() {
 
 void setup() {
   Serial.begin(115200);
+#if MQTT_TLS
+  mqttTransport.setCACert(MQTT_ROOT_CA);
+#endif
   pinMode(BEDROOM_FAN_PIN, OUTPUT);
   pinMode(BEDROOM_LED_PIN, OUTPUT);
   pinMode(KITCHEN_FAN_PIN, OUTPUT);
@@ -339,6 +373,9 @@ void setup() {
   rfid.PCD_Init();
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) delay(500);
+#if MQTT_TLS
+  synchroniseClockForTls();
+#endif
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
   mqtt.setCallback(onMessage);
 }
