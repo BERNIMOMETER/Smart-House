@@ -1,7 +1,10 @@
 from pathlib import Path
 import os
-
 from django.core.exceptions import ImproperlyConfigured
+
+from dotenv import load_dotenv
+
+load_dotenv("/etc/smarthouse/smarthouse.env", override=True)
 
 
 def env_flag(name, default=False):
