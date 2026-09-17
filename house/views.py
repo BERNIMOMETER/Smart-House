@@ -4,7 +4,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
 from .models import DeviceState, NFCAuditLog, SystemState
-from .mqtt import publish_command, publish_security_mode
+from .mqtt import MQTTCommandError, publish_command, publish_security_mode
 
 CONTROLLABLE = {
     ("kitchen_living", "living_led"),
@@ -37,8 +37,8 @@ def set_security_mode(request):
     system, _ = SystemState.objects.get_or_create(pk=1)
     try:
         publish_security_mode(enabled)
-    except OSError as error:
-        messages.error(request, f"Command was not sent: {error}")
+    except MQTTCommandError:
+        messages.error(request, "Command was not sent. Check the MQTT connection and try again.")
         return redirect("dashboard")
     # This is desired global configuration; devices subsequently report their observed state.
     system.security_mode = enabled
@@ -54,8 +54,8 @@ def control_device(request):
         return HttpResponseBadRequest("Invalid device command")
     try:
         publish_command(zone, device, command)
-    except OSError as error:
-        messages.error(request, f"Command was not sent: {error}")
+    except MQTTCommandError:
+        messages.error(request, "Command was not sent. Check the MQTT connection and try again.")
         return redirect("dashboard")
     # AUTO releases a manual override. ON/OFF set it. State itself remains device-reported.
     state, _ = DeviceState.objects.get_or_create(zone=zone, device=device)

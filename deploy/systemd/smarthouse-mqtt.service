@@ -1,0 +1,24 @@
+[Unit]
+Description=Smart House MQTT state bridge
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=smarthouse
+Group=smarthouse
+WorkingDirectory=/opt/smarthouse
+EnvironmentFile=/etc/smarthouse/smarthouse.env
+ExecStart=/opt/smarthouse/.venv/bin/python manage.py mqtt_bridge
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+ReadWritePaths=/opt/smarthouse
+
+[Install]
+WantedBy=multi-user.target
