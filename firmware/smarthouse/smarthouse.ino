@@ -1,5 +1,56 @@
 #include <WiFi.h>
-#include "../config.h"
+
+// Local network and MQTT settings.
+#define WIFI_SSID "Shesh"
+#define WIFI_PASSWORD "POGI-AKO"
+#define MQTT_HOST "a183c6cd0d574f5ca102dee94fb9c29c.s1.eu.hivemq.cloud"
+#define MQTT_PORT 8883
+#define MQTT_USER "wadudumzaku"
+#define MQTT_PASSWORD "wadudumzaku"
+#define MQTT_CLIENT_ID "smarthouse-esp32-s3"
+#define MQTT_TOPIC_PREFIX "smarthouse"
+
+// Keep TLS enabled for HiveMQ Cloud. Set to 0 only for an isolated local broker.
+#define MQTT_TLS 1
+
+#if MQTT_TLS
+#define NTP_SERVER "pool.ntp.org"
+static const char MQTT_ROOT_CA[] = R"EOF(
+-----BEGIN CERTIFICATE-----
+MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4
+WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu
+ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY
+MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc
+h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+
+0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6U
+A5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+sW
+T8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qyH
+B5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x+UC
+B5iPNgiV5+I3lg02dZ77DnKxHZu8A/lJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUv
+KBds0pjBqAlkd25HN7rOrFleaJ1/ctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWn
+OlFuhjuefXKnEgV4We0+UXgVCwOPjdAvBbI+e0ocS3MFEvzG6uBQE3xDk3SzynTn
+jh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbw
+qHyGO0aoSCqI3Haadr8faqU9GY/rOPNk3sgrDQoo//fb4hVC1CLQJ13hef4Y53CI
+rU7m2Ys6xt0nUW7/vGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV
+HRMBAf8EBTADAQH/MB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkq
+hkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu+ILlaS/V9lZL
+ubhzEFnTIZd+50xx+7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe+GnY+EgPbk6ZGQ
+3BebYhtF8GaV0nxvwuo77x/Py9auJ/GpsMiu/X1+mvoiBOv/2X/qkSsisRcOj/KK
+NFtY2PwByVS5uCbMiogziUwthDyC3+6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5
+ORAzI4JMPJ+GslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7Ur
+TkXWStAmzOVyyghqpZXjFaH3pO3JLF+l+/+sKAIuvtd7u+Nxe5AW0wdeRlN8NwdC
+jNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4+63SM1N95R1NbdWhscdCb+ZAJzVc
+oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq
+4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U/t7y0Ff/9yi0GE44Za4rF2LN9d11TPA
+mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d
+emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
+-----END CERTIFICATE-----
+
+)EOF";
+#endif
+
 #if MQTT_TLS
 #include <WiFiClientSecure.h>
 #include <time.h>
@@ -34,6 +85,7 @@ constexpr int RFID_SCK_PIN = 18;
 
 constexpr int DHT_TYPE = DHT11;
 constexpr float FAN_THRESHOLD_C = 30.0;
+#define SERVO_ENABLED 0
 
 // --- MQ2 / LDR thresholds with hysteresis ---
 // NOTE: if you add a voltage divider on the MQ2 AO line (needed if your
@@ -155,7 +207,9 @@ void setOutdoorLed(bool on) {
 }
 
 void openDoor() {
+#if SERVO_ENABLED
   door.write(DOOR_OPEN_ANGLE);
+#endif
   doorClosesAt = millis() + DOOR_OPEN_MS;
   publishState("entrance", "door", "OPEN");
 }
@@ -174,8 +228,12 @@ void handleSecurityMode(const String &value) {
 }
 
 void onMessage(char *topic, byte *payload, unsigned int length) {
+  Serial.printf("MQTT received: %s -> ", topic);
   String value;
-  for (unsigned int index = 0; index < length; ++index) value += (char)payload[index];
+  for (unsigned int index = 0; index < length; ++index) {
+    value += (char)payload[index];
+  }
+  Serial.println(value);
   String topicName(topic);
 
   if (topicName == commandTopic("system", "security_mode")) {
@@ -205,13 +263,22 @@ void maintainMqtt() {
   if (now - lastMqttAttempt < MQTT_RETRY_INTERVAL_MS) return;
   lastMqttAttempt = now;
 
+  Serial.printf("MQTT connecting to %s:%d, free heap: %u\n", MQTT_HOST, MQTT_PORT, ESP.getFreeHeap());
   if (mqtt.connect(MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD)) {
-    mqtt.subscribe(commandTopic("system", "security_mode").c_str());
-    mqtt.subscribe(commandTopic("bedroom", "fan").c_str());
-    mqtt.subscribe(commandTopic("bedroom", "led").c_str());
-    mqtt.subscribe(commandTopic("kitchen_living", "living_led").c_str());
-    mqtt.subscribe(commandTopic("entrance", "outdoor_led").c_str());
-    mqtt.subscribe(commandTopic("entrance", "door").c_str());
+    Serial.println("MQTT connected");
+    const char *topics[] = {
+      "system/security_mode",
+      "bedroom/fan",
+      "bedroom/led",
+      "kitchen_living/living_led",
+      "entrance/outdoor_led",
+      "entrance/door",
+    };
+    for (const char *topicSuffix : topics) {
+      String topic = String(MQTT_TOPIC_PREFIX) + "/" + topicSuffix + "/set";
+      bool subscribed = mqtt.subscribe(topic.c_str());
+      Serial.printf("MQTT subscribe %s: %s\n", topic.c_str(), subscribed ? "OK" : "FAILED");
+    }
     publishState("system", "security_mode", securityMode ? "ON" : "OFF");
     publishBool("bedroom", "fan", bedroomFan);
     publishBool("bedroom", "led", bedroomLed);
@@ -304,6 +371,21 @@ void readSensors() {
     setOutdoorLed(wantOutdoorLed);
   }
 
+  Serial.println("--- Sensor readings ---");
+  if (!isnan(temperature) && !isnan(humidity)) {
+    Serial.printf("DHT11: %.1f C, %.1f %% RH\n", temperature, humidity);
+  } else {
+    Serial.println("DHT11: unavailable");
+  }
+  Serial.printf("MQ2: raw=%d, alarm=%s\n", smokeRaw, smokeAlarm ? "ON" : "OFF");
+  Serial.printf("LDR: raw=%d, outdoor light=%s\n", lightRaw, outdoorLed ? "ON" : "OFF");
+  Serial.printf(
+    "PIR: living=%s, entrance=%s, security=%s\n",
+    digitalRead(LIVING_PIR_PIN) == HIGH ? "HIGH" : "LOW",
+    digitalRead(ENTRANCE_PIR_PIN) == HIGH ? "HIGH" : "LOW",
+    securityMode ? "ON" : "OFF"
+  );
+
   if (millis() - lastReport >= REPORT_INTERVAL_MS) {
     lastReport = millis();
     char smokePayload[64];
@@ -351,9 +433,15 @@ void readMotion() {
 
 void setup() {
   Serial.begin(115200);
+  delay(1000);
+  Serial.println("Sketch setup started");
 #if MQTT_TLS
+  Serial.println("Configuring TLS certificate...");
   mqttTransport.setCACert(MQTT_ROOT_CA);
+  Serial.println("TLS certificate configured");
+  mqttTransport.setHandshakeTimeout(15);
 #endif
+  Serial.println("Configuring pins...");
   pinMode(BEDROOM_FAN_PIN, OUTPUT);
   pinMode(BEDROOM_LED_PIN, OUTPUT);
   pinMode(KITCHEN_FAN_PIN, OUTPUT);
@@ -365,16 +453,39 @@ void setup() {
   pinMode(MQ2_PIN, INPUT);
   pinMode(LDR_PIN, INPUT);
   digitalWrite(BUZZER_PIN, LOW);
+  Serial.println("Starting sensors and actuators...");
   dht.begin();
+  Serial.println("DHT initialized");
+#if SERVO_ENABLED
   door.setPeriodHertz(50);
+  Serial.println("Servo frequency configured");
   door.attach(SERVO_PIN);
+  Serial.println("Servo attached");
   door.write(DOOR_CLOSED_ANGLE);
+  Serial.println("Servo position set");
+#else
+  Serial.println("Servo disabled until hardware is connected");
+#endif
   SPI.begin(RFID_SCK_PIN, RFID_MISO_PIN, RFID_MOSI_PIN, RFID_SS_PIN);
+  Serial.println("SPI initialized");
   rfid.PCD_Init();
+  Serial.println("RFID initialized");
+  Serial.println("Peripherals initialized");
+  Serial.println("Connecting to WiFi...");
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) delay(500);
+  unsigned long wifiStartedAt = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - wifiStartedAt < 30000) {
+    Serial.printf("WiFi status: %d\n", WiFi.status());
+    delay(1000);
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi connection timed out; retrying in loop");
+  } else {
+    Serial.print("WiFi connected, IP: ");
+    Serial.println(WiFi.localIP());
+  }
 #if MQTT_TLS
-  synchroniseClockForTls();
+  if (WiFi.status() == WL_CONNECTED) synchroniseClockForTls();
 #endif
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
   mqtt.setCallback(onMessage);
@@ -390,7 +501,9 @@ void loop() {
   // millis()-safe comparison: a plain "millis() >= doorClosesAt" breaks for
   // the one wraparound window every ~49 days of uptime.
   if (doorClosesAt && (long)(millis() - doorClosesAt) >= 0) {
+#if SERVO_ENABLED
     door.write(DOOR_CLOSED_ANGLE);
+#endif
     doorClosesAt = 0;
     publishState("entrance", "door", "CLOSED");
   }

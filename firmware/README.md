@@ -4,7 +4,7 @@
 
 ## Arduino setup
 
-1. Copy `config.example.h` to `config.h` and fill in the Wi-Fi and HiveMQ Cloud MQTT settings. Keep `MQTT_TLS` set to `1`, use the cluster hostname and port `8883`, and paste the public PEM root CA that validates the cluster into `MQTT_ROOT_CA`. The ESP32 synchronizes its clock through `NTP_SERVER` before validating the certificate, so the Wi-Fi network must allow outbound NTP. Never use `setInsecure()` or commit `config.h`.
+1. Open `smarthouse/smarthouse.ino` and fill in the Wi-Fi, HiveMQ Cloud MQTT settings, and `MQTT_ROOT_CA` near the top of the sketch. Keep `MQTT_TLS` set to `1`, use the cluster hostname and port `8883`, and paste the public PEM root CA that validates the cluster into `MQTT_ROOT_CA`. The ESP32 synchronizes its clock through `NTP_SERVER` before validating the certificate, so the Wi-Fi network must allow outbound NTP. Never use `setInsecure()`.
 2. Install these libraries through the Arduino Library Manager:
    - PubSubClient
    - DHT sensor library
@@ -63,4 +63,4 @@ smarthouse/entrance/outdoor_led/set       ON | OFF | AUTO
 smarthouse/entrance/door/set               OPEN
 ```
 
-States are published under the matching `.../state` topics. Sensor readings use JSON, for example `{"temp":30.0,"humidity":65.0}`. The sketch uses the `MQTT_CLIENT_ID` from `config.h`, so only one copy of this combined sketch should be connected with that client ID. `MQTT_TOPIC_PREFIX` defaults to `smarthouse` and must match Django's `MQTT_TOPIC_PREFIX`.
+States are published under the matching `.../state` topics. Sensor readings use JSON, for example `{"temp":30.0,"humidity":65.0}`. The sketch uses the `MQTT_CLIENT_ID` defined near the top of the sketch, so only one copy of this combined sketch should be connected with that client ID. `MQTT_TOPIC_PREFIX` defaults to `smarthouse` and must match Django's `MQTT_TOPIC_PREFIX`.
