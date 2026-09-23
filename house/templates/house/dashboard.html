@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart House</title>
+  <script>
+    (() => {
+      try {
+        const savedTheme = localStorage.getItem('smarthouse-theme');
+        const useDarkTheme = savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', useDarkTheme);
+      } catch (error) {}
+    })();
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' };</script>
+</head>
+<body class="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
+  <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <header class="flex flex-col gap-5 border-b border-slate-200 pb-6 dark:border-slate-800 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p class="font-mono text-xs font-semibold uppercase tracking-[.18em] text-slate-500 dark:text-slate-400">IoT dashboard</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Smart House</h1>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Live device controls and sensor status</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <p class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dashboard status</p>
+          <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">Three monitored zones</p>
+        </div>
+        <button id="theme-toggle" type="button" class="min-h-11 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-950" aria-pressed="false">
+          <span id="theme-toggle-label">Dark mode</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="mt-5 space-y-2" aria-label="System notifications" aria-live="polite">
+      {% for message in messages %}
+        <div class="flex min-w-0 items-start gap-3 rounded-xl border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% else %}border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400{% endif %}">
+          <span class="mt-0.5 shrink-0 font-bold" aria-hidden="true">{% if message.tags == 'error' %}!{% else %}i{% endif %}</span>
+          <p class="min-w-0 break-words">{{ message }}</p>
+        </div>
+      {% endfor %}
+    </section>
+
+    <section class="mt-8" aria-labelledby="rooms-heading">
+      <div class="flex items-baseline justify-between gap-4">
+        <div>
+          <p class="font-mono text-xs font-semibold uppercase tracking-[.16em] text-slate-500 dark:text-slate-400">By room</p>
+          <h2 id="rooms-heading" class="mt-1 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Room controls</h2>
+        </div>
+        <p class="hidden text-sm text-slate-500 dark:text-slate-400 sm:block">Controls reflect device-reported state.</p>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12" aria-label="Room controls">
+        <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 lg:col-span-5">
+          <div class="flex items-start justify-between gap-3 border-b border-slate-200 pb-4 dark:border-slate-800">
+            <div><h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Kitchen + Living</h3><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Safety and lighting</p></div>
+            <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-300">Zone 01</span>
+          </div>
+          <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Smoke</dt><dd class="font-semibold {% if status.kitchen_living_mq2.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_mq2 %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_mq2.value.state|default:'No data' }}</dd></div>
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Exhaust fan</dt><dd class="font-semibold {% if status.kitchen_living_fan %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_fan.value.state|default:'No data' }}</dd></div>
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Buzzer</dt><dd class="font-semibold {% if status.kitchen_living_buzzer.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_buzzer %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_buzzer.value.state|default:'No data' }}</dd></div>
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Living motion</dt><dd class="font-semibold {% if status.kitchen_living_pir.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_pir %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_pir.value.state|default:'No data' }}</dd></div>
+          </dl>
+          <div class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800">
+            {% include 'house/control.html' with zone='kitchen_living' device='living_led' title='Living light' state=status.kitchen_living_living_led.value.state auto=False manual_override=status.kitchen_living_living_led.manual_override %}
+          </div>
+        </article>
+
+        <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 lg:col-span-4">
+          <div class="flex items-start justify-between gap-3 border-b border-slate-200 pb-4 dark:border-slate-800">
+            <div><h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Bedroom</h3><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Climate and comfort</p></div>
+            <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-300">Zone 02</span>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-3 border-b border-slate-200 pb-4 dark:border-slate-800">
+            <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950/50"><p class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Temperature</p><p class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">{{ status.bedroom_dht11.value.temp|default:'--' }}<span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">°C</span></p></div>
+            <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950/50"><p class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Humidity</p><p class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">{{ status.bedroom_dht11.value.humidity|default:'--' }}<span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">% RH</span></p></div>
+          </div>
+          <div class="mt-4 space-y-4">
+            {% include 'house/control.html' with zone='bedroom' device='fan' title='Fan (auto at ≥ 30°C)' state=status.bedroom_fan.value.state auto=True manual_override=status.bedroom_fan.manual_override %}
+            {% include 'house/control.html' with zone='bedroom' device='led' title='Bedroom light' state=status.bedroom_led.value.state auto=False manual_override=status.bedroom_led.manual_override %}
+          </div>
+        </article>
+
+        <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 lg:col-span-3">
+          <div class="flex items-start justify-between gap-3 border-b border-slate-200 pb-4 dark:border-slate-800">
+            <div><h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Entrance</h3><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Access and exterior</p></div>
+            <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-300">Zone 03</span>
+          </div>
+          <dl class="mt-4 grid gap-3 border-b border-slate-200 pb-4 text-sm dark:border-slate-800">
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Ambient light</dt><dd class="font-semibold {% if status.entrance_ldr %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.entrance_ldr.value.raw|default:'No data' }}</dd></div>
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Entrance motion</dt><dd class="font-semibold {% if status.entrance_pir.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.entrance_pir %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.entrance_pir.value.state|default:'No data' }}</dd></div>
+          </dl>
+          <div class="mt-4 space-y-4">
+            {% include 'house/control.html' with zone='entrance' device='outdoor_led' title='Outdoor light' state=status.entrance_outdoor_led.value.state auto=True manual_override=status.entrance_outdoor_led.manual_override %}
+            {% include 'house/control.html' with zone='entrance' device='door' title='Door lock' state=status.entrance_door.value.state door=True %}
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="mt-8" aria-labelledby="systems-heading">
+      <div><p class="font-mono text-xs font-semibold uppercase tracking-[.16em] text-slate-500 dark:text-slate-400">By system</p><h2 id="systems-heading" class="mt-1 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">System overview</h2></div>
+      <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12">
+        <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 lg:col-span-5">
+          <div class="flex items-start justify-between gap-3"><div><h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Climate</h3><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Bedroom environmental readings</p></div>{% if status.bedroom_dht11 %}<span class="rounded-lg bg-blue-600 px-2 py-1 font-mono text-xs font-semibold text-white dark:bg-blue-500">LIVE</span>{% else %}<span class="rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs font-semibold text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400">NO DATA</span>{% endif %}</div>
+          <dl class="mt-4 grid grid-cols-2 gap-3">
+            <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800"><dt class="font-mono text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Temperature</dt><dd class="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">{{ status.bedroom_dht11.value.temp|default:'--' }}<span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">°C</span></dd></div>
+            <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800"><dt class="font-mono text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Humidity</dt><dd class="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">{{ status.bedroom_dht11.value.humidity|default:'--' }}<span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">% RH</span></dd></div>
+          </dl>
+          <p class="mt-4 border-t border-slate-200 pt-4 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">Fan status: <span class="font-semibold {% if status.bedroom_fan %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.bedroom_fan.value.state|default:'No data' }}</span></p>
+        </article>
+
+        <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 lg:col-span-7">
+          <div class="flex flex-col gap-4 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between">
+            <div><h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Security</h3><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Alarm state and access control</p></div>
+            <form method="post" action="{% url 'set_security_mode' %}">{% csrf_token %}
+              <input type="hidden" name="enabled" value="{{ system.security_mode|yesno:'0,1' }}">
+              <button class="min-h-11 rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900">{{ system.security_mode|yesno:'Disarm security,Arm security' }}</button>
+            </form>
+          </div>
+          <div class="mt-4 flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 {% if system.security_mode %}border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400{% else %}border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300{% endif %}"><p class="font-mono text-xs font-semibold uppercase tracking-wider">Security mode</p><p class="text-sm font-bold">{{ system.security_mode|yesno:'ARMED,DISARMED' }}</p></div>
+          <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Smoke alert</dt><dd class="font-semibold {% if status.kitchen_living_mq2.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_mq2 %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_mq2.value.state|default:'No data' }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Buzzer</dt><dd class="font-semibold {% if status.kitchen_living_buzzer.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_buzzer %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_buzzer.value.state|default:'No data' }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Living motion</dt><dd class="font-semibold {% if status.kitchen_living_pir.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_pir %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_pir.value.state|default:'No data' }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Entrance motion</dt><dd class="font-semibold {% if status.entrance_pir.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.entrance_pir %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.entrance_pir.value.state|default:'No data' }}</dd></div>
+          </dl>
+        </article>
+      </div>
+    </section>
+
+    <section class="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2" aria-label="NFC audit controls">
+      <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        <div class="flex items-center justify-between gap-3 border-b border-slate-200 pb-4 dark:border-slate-800"><div><h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">NFC activity</h2><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Recent access events</p></div><span class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Latest reads</span></div>
+        <div class="mt-1 max-h-64 overflow-auto text-sm">
+          {% for log in nfc_logs %}
+            <div class="flex min-w-0 items-start justify-between gap-4 border-b border-slate-200 py-3 last:border-b-0 dark:border-slate-800">
+              <div class="min-w-0"><p class="break-all font-mono font-medium text-slate-900 dark:text-slate-100">{{ log.tag_id }}</p>{% if log.note %}<p class="mt-1 break-words text-xs text-slate-500 dark:text-slate-400">{{ log.note }}</p>{% endif %}</div>
+              <div class="shrink-0 text-right"><p class="font-semibold {% if log.granted %}text-emerald-700 dark:text-emerald-400{% else %}text-red-700 dark:text-red-400{% endif %}">{{ log.granted|yesno:'Granted,Denied' }}</p><p class="mt-1 font-mono text-xs text-slate-500 dark:text-slate-400">{{ log.created_at|date:'Y-m-d H:i:s' }}</p></div>
+            </div>
+          {% empty %}<p class="py-6 text-sm text-slate-400 dark:text-slate-600">No NFC activity yet.</p>{% endfor %}
+        </div>
+      </article>
+
+      <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        <div class="border-b border-slate-200 pb-4 dark:border-slate-800"><h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Add NFC audit entry</h2><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Record an administrative access decision.</p></div>
+        <form method="post" action="{% url 'add_nfc_log' %}" class="mt-4 grid gap-4">{% csrf_token %}
+          <div><label for="tag-id" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tag ID</label><input id="tag-id" required name="tag_id" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-600 dark:focus:border-blue-500 dark:focus:ring-blue-500/25" aria-describedby="tag-id-help"><p id="tag-id-help" class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Use the ID reported by the NFC reader.</p></div>
+          <div><label for="nfc-note" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Note <span class="font-normal normal-case tracking-normal">(optional)</span></label><input id="nfc-note" name="note" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-600 dark:focus:border-blue-500 dark:focus:ring-blue-500/25"></div>
+          <div><label for="nfc-access" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Access</label><select id="nfc-access" name="granted" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-500 dark:focus:ring-blue-500/25"><option value="1">Granted</option><option value="0">Denied</option></select></div>
+          <button class="min-h-11 w-full rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900">Save log</button>
+        </form>
+      </article>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const button = document.getElementById('theme-toggle');
+      const label = document.getElementById('theme-toggle-label');
+      const updateTheme = (useDarkTheme, persist = false) => {
+        document.documentElement.classList.toggle('dark', useDarkTheme);
+        button.setAttribute('aria-pressed', String(useDarkTheme));
+        label.textContent = useDarkTheme ? 'Light mode' : 'Dark mode';
+        if (persist) localStorage.setItem('smarthouse-theme', useDarkTheme ? 'dark' : 'light');
+      };
+      updateTheme(document.documentElement.classList.contains('dark'));
+      button.addEventListener('click', () => updateTheme(!document.documentElement.classList.contains('dark'), true));
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Django
+db.sqlite3
+staticfiles/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# ESP32 secrets/config
+firmware/config.h
