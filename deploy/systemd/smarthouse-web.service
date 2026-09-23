@@ -1,0 +1,24 @@
+[Unit]
+Description=Smart House Django web application
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=smarthouse
+Group=smarthouse
+WorkingDirectory=/opt/smarthouse
+EnvironmentFile=/etc/smarthouse/smarthouse.env
+ExecStart=/opt/smarthouse/.venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8000 --access-logfile - --error-logfile - smarthouse.wsgi:application
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+ReadWritePaths=/opt/smarthouse
+
+[Install]
+WantedBy=multi-user.target
