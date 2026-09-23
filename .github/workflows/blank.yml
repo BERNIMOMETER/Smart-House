@@ -1,0 +1,27 @@
+name: Build & Deploy
+
+# Controls when the workflow will run
+on:
+  workflow_dispatch:   # 👈 manual trigger from Actions tab
+  push:                # 👈 automatic trigger on ANY branch push
+  pull_request:        # 👈 automatic trigger on ANY PR
+
+jobs:
+  build:
+    runs-on: self-hosted   # 👈 targets your Raspberry Pi runner
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Identify branch
+        run: echo "Triggered by branch $GITHUB_REF_NAME"
+
+      - name: Deploy app
+        run: |
+          echo "Deploying branch $GITHUB_REF_NAME..."
+          if [ "$GITHUB_REPOSITORY" = "BERNIMOMETER/Smart-House" ]; then
+            cd /srv/projects/Smart-House
+          fi
+          git fetch origin $GITHUB_REF_NAME
+          git reset --hard origin/$GITHUB_REF_NAME
+          ./deploy.sh
