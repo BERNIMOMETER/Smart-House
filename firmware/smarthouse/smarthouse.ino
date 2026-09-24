@@ -99,19 +99,18 @@ constexpr int LDR_DARK_OFF = 1600;         // brighter than this turns it back o
 constexpr int DOOR_OPEN_ANGLE = 90;
 constexpr int DOOR_CLOSED_ANGLE = 0;
 constexpr unsigned long DOOR_OPEN_MS = 4000;
+constexpr unsigned long BUZZER_DURATION_MS = 5000;
 constexpr unsigned long SENSOR_INTERVAL_MS = 5000;
 constexpr unsigned long REPORT_INTERVAL_MS = 10000;
 constexpr unsigned long MQTT_RETRY_INTERVAL_MS = 3000;
 constexpr unsigned long WIFI_RETRY_INTERVAL_MS = 5000;
 constexpr unsigned long NFC_DEBOUNCE_MS = 3000;
+constexpr byte MAX_AUTHORISED_UIDS = 32;
 
 // Set to 1 if you want a tripped motion alarm to clear itself the moment the
 // PIR goes back to LOW, instead of staying latched until security mode is
 // toggled off/on. Defaults to the original latching behavior.
 #define ALARM_AUTO_CLEAR 0
-
-// Replace this value with the lowercase hexadecimal UID of the authorised tag.
-const char *AUTHORISED_UID = "REPLACE_WITH_AUTHORISED_UID";
 
 #if MQTT_TLS
 WiFiClientSecure mqttTransport;
@@ -127,6 +126,7 @@ bool securityMode = false;
 bool smokeAlarm = false;
 bool livingMotionAlarm = false;
 bool entranceMotionAlarm = false;
+bool motionDetected = false;
 bool bedroomFan = false;
 bool bedroomFanManual = false;
 bool bedroomLed = false;
@@ -136,12 +136,15 @@ bool outdoorLed = false;
 bool outdoorLedManual = false;
 bool buzzer = false;
 unsigned long doorClosesAt = 0;
+unsigned long buzzerStopsAt = 0;
 unsigned long lastSensorRead = 0;
 unsigned long lastReport = 0;
 unsigned long lastMqttAttempt = 0;
 unsigned long lastWifiAttempt = 0;
 String lastNfcUid = "";
 unsigned long lastNfcMillis = 0;
+String authorisedUids[MAX_AUTHORISED_UIDS];
+byte authorisedUidCount = 0;
 
 void publishState(const char *zone, const char *device, const char *value, bool retained = true) {
   char topic[160];
@@ -174,12 +177,30 @@ void publishBool(const char *zone, const char *device, bool value) {
   publishState(zone, device, value ? "ON" : "OFF");
 }
 
-void setBuzzer() {
-  bool shouldBuzz = smokeAlarm || livingMotionAlarm || entranceMotionAlarm;
-  if (shouldBuzz == buzzer) return;
-  buzzer = shouldBuzz;
-  digitalWrite(BUZZER_PIN, buzzer ? HIGH : LOW);
-  publishBool("kitchen_living", "buzzer", buzzer);
+void setBuzzer(bool trigger) {
+  bool shouldBuzz = smokeAlarm || motionDetected;
+  if (!shouldBuzz) {
+    if (buzzer && !buzzerStopsAt) buzzerStopsAt = millis() + BUZZER_DURATION_MS;
+    return;
+  }
+  buzzerStopsAt = 0;
+  if (!trigger && buzzer) return;
+  if (buzzer) return;
+  buzzer = true;
+  digitalWrite(BUZZER_PIN, HIGH);
+  publishBool("kitchen_living", "buzzer", true);
+}
+
+void maintainBuzzer() {
+  if (smokeAlarm || motionDetected) {
+    buzzerStopsAt = 0;
+    return;
+  }
+  if (!buzzer || !buzzerStopsAt || (long)(millis() - buzzerStopsAt) < 0) return;
+  buzzer = false;
+  buzzerStopsAt = 0;
+  digitalWrite(BUZZER_PIN, LOW);
+  publishBool("kitchen_living", "buzzer", false);
 }
 
 void setBedroomFan(bool on) {
@@ -222,7 +243,7 @@ void handleSecurityMode(const String &value) {
     publishBool("kitchen_living", "pir", false);
     publishBool("entrance", "pir", false);
     publishBool("entrance", "alarm", false);
-    setBuzzer();
+    setBuzzer(false);
   }
   publishState("system", "security_mode", securityMode ? "ON" : "OFF");
 }
@@ -235,6 +256,13 @@ void onMessage(char *topic, byte *payload, unsigned int length) {
   }
   Serial.println(value);
   String topicName(topic);
+  String authorizationPrefix = String(MQTT_TOPIC_PREFIX) + "/entrance/nfc/authorized/";
+  if (topicName.startsWith(authorizationPrefix) && topicName.endsWith("/set")) {
+    String uid = topicName.substring(authorizationPrefix.length(), topicName.length() - 4);
+    setAuthorisedUid(uid, value == "ON");
+    Serial.printf("NFC card %s: %s\n", uid.c_str(), value == "ON" ? "AUTHORIZED" : "REVOKED");
+    return;
+  }
 
   if (topicName == commandTopic("system", "security_mode")) {
     handleSecurityMode(value);
@@ -279,6 +307,9 @@ void maintainMqtt() {
       bool subscribed = mqtt.subscribe(topic.c_str());
       Serial.printf("MQTT subscribe %s: %s\n", topic.c_str(), subscribed ? "OK" : "FAILED");
     }
+    String authorizationTopic = String(MQTT_TOPIC_PREFIX) + "/entrance/nfc/authorized/+/set";
+    bool authorizationSubscribed = mqtt.subscribe(authorizationTopic.c_str());
+    Serial.printf("MQTT subscribe %s: %s\n", authorizationTopic.c_str(), authorizationSubscribed ? "OK" : "FAILED");
     publishState("system", "security_mode", securityMode ? "ON" : "OFF");
     publishBool("bedroom", "fan", bedroomFan);
     publishBool("bedroom", "led", bedroomLed);
@@ -302,7 +333,22 @@ void maintainWifi() {
 }
 
 bool allowedTag(const String &uid) {
-  return uid.equalsIgnoreCase(AUTHORISED_UID);
+  for (byte index = 0; index < authorisedUidCount; ++index) {
+    if (uid.equalsIgnoreCase(authorisedUids[index])) return true;
+  }
+  return false;
+}
+
+void setAuthorisedUid(const String &uid, bool authorised) {
+  for (byte index = 0; index < authorisedUidCount; ++index) {
+    if (!authorisedUids[index].equalsIgnoreCase(uid)) continue;
+    if (authorised) return;
+    authorisedUids[index] = authorisedUids[authorisedUidCount - 1];
+    authorisedUids[--authorisedUidCount] = "";
+    return;
+  }
+  if (!authorised || authorisedUidCount >= MAX_AUTHORISED_UIDS) return;
+  authorisedUids[authorisedUidCount++] = uid;
 }
 
 void checkNfc() {
@@ -333,7 +379,7 @@ void checkNfc() {
       entranceMotionAlarm = false;
       publishBool("entrance", "pir", false);
       publishBool("entrance", "alarm", false);
-      setBuzzer();
+      setBuzzer(false);
     }
   }
   char payload[140];
@@ -362,7 +408,7 @@ void readSensors() {
     digitalWrite(KITCHEN_FAN_PIN, smokeAlarm ? HIGH : LOW);
     publishBool("kitchen_living", "mq2", smokeAlarm);
     publishBool("kitchen_living", "fan", smokeAlarm);
-    setBuzzer();
+    setBuzzer(smokeDetected);
   }
 
   int lightRaw = analogRead(LDR_PIN);
@@ -398,37 +444,44 @@ void readSensors() {
 }
 
 void readMotion() {
-  if (!securityMode) return;
+  if (!securityMode) {
+    motionDetected = false;
+    setBuzzer(false);
+    return;
+  }
 
   bool livingHigh = digitalRead(LIVING_PIR_PIN) == HIGH;
+  bool entranceHigh = digitalRead(ENTRANCE_PIR_PIN) == HIGH;
+  motionDetected = livingHigh || entranceHigh;
   if (livingHigh && !livingMotionAlarm) {
     livingMotionAlarm = true;
     publishBool("kitchen_living", "pir", true);
-    setBuzzer();
+    setBuzzer(true);
   }
 #if ALARM_AUTO_CLEAR
   else if (!livingHigh && livingMotionAlarm) {
     livingMotionAlarm = false;
     publishBool("kitchen_living", "pir", false);
-    setBuzzer();
+    setBuzzer(false);
   }
 #endif
 
-  bool entranceHigh = digitalRead(ENTRANCE_PIR_PIN) == HIGH;
   if (entranceHigh && !entranceMotionAlarm) {
     entranceMotionAlarm = true;
     publishBool("entrance", "pir", true);
     publishBool("entrance", "alarm", true);
-    setBuzzer();
+    setBuzzer(true);
   }
 #if ALARM_AUTO_CLEAR
   else if (!entranceHigh && entranceMotionAlarm) {
     entranceMotionAlarm = false;
     publishBool("entrance", "pir", false);
     publishBool("entrance", "alarm", false);
-    setBuzzer();
+    setBuzzer(false);
   }
 #endif
+
+  setBuzzer(motionDetected);
 }
 
 void setup() {
@@ -445,11 +498,11 @@ void setup() {
   pinMode(BEDROOM_FAN_PIN, OUTPUT);
   pinMode(BEDROOM_LED_PIN, OUTPUT);
   pinMode(KITCHEN_FAN_PIN, OUTPUT);
-  pinMode(LIVING_PIR_PIN, INPUT);
+  pinMode(LIVING_PIR_PIN, INPUT_PULLDOWN);
   pinMode(LIVING_LED_PIN, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(OUTDOOR_LED_PIN, OUTPUT);
-  pinMode(ENTRANCE_PIR_PIN, INPUT);
+  pinMode(ENTRANCE_PIR_PIN, INPUT_PULLDOWN);
   pinMode(MQ2_PIN, INPUT);
   pinMode(LDR_PIN, INPUT);
   digitalWrite(BUZZER_PIN, LOW);
@@ -507,6 +560,7 @@ void loop() {
     doorClosesAt = 0;
     publishState("entrance", "door", "CLOSED");
   }
+  maintainBuzzer();
   readMotion();
   checkNfc();
   if (millis() - lastSensorRead >= SENSOR_INTERVAL_MS) {

@@ -147,3 +147,8 @@ def publish_command(zone, device, command):
 
 def publish_security_mode(enabled):
     publish_command("system", "security_mode", "ON" if enabled else "OFF")
+
+
+def publish_nfc_authorization(tag_id, enabled):
+    """Retain one authorization decision for the ESP32 to receive on reconnect."""
+    publish_command("entrance", f"nfc/authorized/{tag_id}", "ON" if enabled else "OFF")

@@ -5,7 +5,7 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import DeviceState, NFCAuditLog, SystemState
+from .models import DeviceState, NFCAuditLog, NFCRegisteredCard, SystemState
 from .mqtt import MQTTBridge, MQTTCommandError, publish_command, topic
 
 
@@ -88,6 +88,21 @@ class MQTTBridgeTests(TestCase):
 
 
 class DashboardControlTests(TestCase):
+    @patch("house.views.publish_nfc_authorization")
+    def test_authorize_card_publishes_and_registers_card(self, publish):
+        response = self.client.post(reverse("set_nfc_authorization"), {"tag_id": "627084B4", "enabled": "1"})
+        self.assertRedirects(response, reverse("dashboard"))
+        publish.assert_called_once_with("627084b4", True)
+        self.assertTrue(NFCRegisteredCard.objects.filter(tag_id="627084b4").exists())
+
+    @patch("house.views.publish_nfc_authorization")
+    def test_revoke_card_publishes_and_removes_card(self, publish):
+        NFCRegisteredCard.objects.create(tag_id="627084b4")
+        response = self.client.post(reverse("set_nfc_authorization"), {"tag_id": "627084b4", "enabled": "0"})
+        self.assertRedirects(response, reverse("dashboard"))
+        publish.assert_called_once_with("627084b4", False)
+        self.assertFalse(NFCRegisteredCard.objects.filter(tag_id="627084b4").exists())
+
     @patch("house.views.publish_command")
     def test_manual_on_sets_override_but_does_not_fake_device_state(self, publish):
         response = self.client.post(reverse("control_device"), {"zone": "bedroom", "device": "fan", "command": "ON"})

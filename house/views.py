@@ -3,8 +3,8 @@ from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
-from .models import DeviceState, NFCAuditLog, SystemState
-from .mqtt import MQTTCommandError, publish_command, publish_security_mode
+from .models import DeviceState, NFCAuditLog, NFCRegisteredCard, SystemState
+from .mqtt import MQTTCommandError, publish_command, publish_nfc_authorization, publish_security_mode
 
 CONTROLLABLE = {
     ("kitchen_living", "living_led"),
@@ -28,6 +28,7 @@ def dashboard(request):
         "system": system,
         "status": status,
         "nfc_logs": NFCAuditLog.objects.all()[:12],
+        "registered_cards": NFCRegisteredCard.objects.all(),
     })
 
 
@@ -77,4 +78,24 @@ def add_nfc_log(request):
         note=request.POST.get("note", "").strip(),
     )
     messages.success(request, "NFC audit entry added.")
+    return redirect("dashboard")
+
+
+@require_POST
+def set_nfc_authorization(request):
+    tag_id = request.POST.get("tag_id", "").strip().lower()
+    enabled = request.POST.get("enabled") == "1"
+    if not tag_id or any(character not in "0123456789abcdef" for character in tag_id):
+        return HttpResponseBadRequest("Tag ID must be hexadecimal")
+    try:
+        publish_nfc_authorization(tag_id, enabled)
+    except MQTTCommandError:
+        messages.error(request, "Authorization was not sent. Check the MQTT connection and try again.")
+        return redirect("dashboard")
+    if enabled:
+        NFCRegisteredCard.objects.update_or_create(tag_id=tag_id)
+        messages.success(request, f"NFC card {tag_id} authorized.")
+    else:
+        NFCRegisteredCard.objects.filter(tag_id=tag_id).delete()
+        messages.success(request, f"NFC card {tag_id} revoked.")
     return redirect("dashboard")
