@@ -191,8 +191,8 @@
           const buttons = form.querySelectorAll('button');
           buttons.forEach((button) => { button.disabled = true; });
           try {
-            const response = await fetch(form.action, {
-              method: 'POST',
+            const response = await fetch(submitter?.formAction || form.action, {
+              method: submitter?.formMethod || form.method || 'POST',
               body: new FormData(form, submitter),
               headers: {'X-Requested-With': 'XMLHttpRequest'},
               credentials: 'same-origin',
