@@ -115,10 +115,16 @@ class MQTTBridge:
             broadcast_state(zone, device, value)
             # NFC event is published as {tag_id, granted, note}; keep an immutable audit entry.
             if zone == "entrance" and device == "nfc" and isinstance(value, dict) and "tag_id" in value:
-                NFCAuditLog.objects.create(
+                log = NFCAuditLog.objects.create(
                     tag_id=str(value["tag_id"]), granted=bool(value.get("granted", False)),
                     source="reader", note=str(value.get("note", "")),
                 )
+                broadcast_state("system", "nfc_log", {
+                    "tag_id": log.tag_id,
+                    "granted": log.granted,
+                    "note": log.note,
+                    "created_at": log.created_at.isoformat(),
+                })
         except Exception:
             LOG.exception("Could not process MQTT message on %s", message.topic)
 
