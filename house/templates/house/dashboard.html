@@ -188,12 +188,14 @@
         form.addEventListener('submit', async (event) => {
           event.preventDefault();
           const submitter = event.submitter;
+          const formData = new FormData(form);
+          if (submitter?.name) formData.set(submitter.name, submitter.value);
           const buttons = form.querySelectorAll('button');
           buttons.forEach((button) => { button.disabled = true; });
           try {
             const response = await fetch(submitter?.formAction || form.action, {
               method: submitter?.formMethod || form.method || 'POST',
-              body: new FormData(form, submitter),
+              body: formData,
               headers: {'X-Requested-With': 'XMLHttpRequest'},
               credentials: 'same-origin',
             });
