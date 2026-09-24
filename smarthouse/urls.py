@@ -7,5 +7,5 @@ urlpatterns = [
     path("", views.dashboard, name="dashboard"),
     path("control/", views.control_device, name="control_device"),
     path("security/", views.set_security_mode, name="set_security_mode"),
-    path("nfc/add/", views.add_nfc_log, name="add_nfc_log"),
+    path("nfc/register/", views.register_nfc_card, name="register_nfc_card"),
 ]

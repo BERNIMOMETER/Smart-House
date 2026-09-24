@@ -5,8 +5,8 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import DeviceState, NFCAuditLog, SystemState
-from .mqtt import MQTTBridge, MQTTCommandError, publish_command, topic
+from .models import DeviceState, NFCRegisteredCard, NFCAuditLog, SystemState
+from .mqtt import MQTTBridge, MQTTCommandError, publish_authorized_nfc_tags, publish_command, topic
 
 
 class MQTTBridgeTests(TestCase):
@@ -86,6 +86,15 @@ class MQTTBridgeTests(TestCase):
         self.assertIn("OSError", logs.output[0])
         self.assertNotIn("broker password", logs.output[0])
 
+    @patch("house.mqtt.publish_command")
+    def test_authorized_cards_are_published_as_a_list(self, publish):
+        NFCRegisteredCard.objects.create(tag_id="f2ffacb4")
+        NFCRegisteredCard.objects.create(tag_id="627084b4")
+
+        publish_authorized_nfc_tags()
+
+        publish.assert_called_once_with("entrance", "nfc_authorized", "627084b4,f2ffacb4")
+
 
 class DashboardControlTests(TestCase):
     @patch("house.views.publish_command")
@@ -156,7 +165,20 @@ class DashboardControlTests(TestCase):
         self.assertContains(response, 'name="device" value="door"')
         self.assertContains(response, 'name="command" value="AUTO"')
         self.assertContains(response, 'name="command" value="OPEN"')
-        self.assertContains(response, 'action="/nfc/add/"')
+        self.assertContains(response, 'action="/nfc/register/"')
         self.assertContains(response, 'name="tag_id"')
         self.assertContains(response, 'name="note"')
-        self.assertContains(response, 'name="granted"')
+
+    @patch("house.views.publish_authorized_nfc_tags")
+    def test_register_nfc_card_normalizes_and_publishes_uid(self, publish):
+        response = self.client.post(reverse("register_nfc_card"), {"tag_id": "F2 FF AC B4", "note": "Front door"})
+        self.assertRedirects(response, reverse("dashboard"))
+        self.assertEqual(NFCRegisteredCard.objects.get().tag_id, "f2ffacb4")
+        publish.assert_called_once_with()
+
+    @patch("house.views.publish_authorized_nfc_tags")
+    def test_register_nfc_card_rejects_invalid_uid(self, publish):
+        response = self.client.post(reverse("register_nfc_card"), {"tag_id": "not-a-uid"})
+        self.assertRedirects(response, reverse("dashboard"))
+        self.assertFalse(NFCRegisteredCard.objects.exists())
+        publish.assert_not_called()

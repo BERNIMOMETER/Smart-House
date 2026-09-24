@@ -12,8 +12,8 @@
    - ESP32Servo
 3. Open `smarthouse/smarthouse.ino` in Arduino IDE.
 4. Select the correct ESP32-S3 board and port.
-5. Replace `REPLACE_WITH_AUTHORISED_UID` with the authorised NFC tag UID. The UID is compared case-insensitively without spaces.
-6. Upload the sketch.
+5. Upload the sketch. The ESP32 receives the registered NFC card list from the retained MQTT topic published by the website.
+6. Register cards from the dashboard using the UID reported by the NFC reader.
 
 Do not upload the three old sketches for this installation. They are retained as references for the original room-specific wiring.
 

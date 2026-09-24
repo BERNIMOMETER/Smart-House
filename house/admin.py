@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DeviceState, NFCAuditLog, SystemState
+from .models import DeviceState, NFCRegisteredCard, NFCAuditLog, SystemState
 
 
 @admin.register(DeviceState)
@@ -12,6 +12,12 @@ class DeviceStateAdmin(admin.ModelAdmin):
 class NFCAuditLogAdmin(admin.ModelAdmin):
     list_display = ("tag_id", "granted", "source", "created_at")
     list_filter = ("granted", "source")
+    search_fields = ("tag_id", "note")
+
+
+@admin.register(NFCRegisteredCard)
+class NFCRegisteredCardAdmin(admin.ModelAdmin):
+    list_display = ("tag_id", "note", "created_at")
     search_fields = ("tag_id", "note")
 
 
