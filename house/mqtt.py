@@ -6,7 +6,7 @@ import uuid
 import paho.mqtt.client as mqtt
 from django.conf import settings
 
-from .models import DeviceState, NFCRegisteredCard, NFCAuditLog, SystemState
+from .models import DeviceState, NFCAuditLog, SystemState
 
 LOG = logging.getLogger(__name__)
 
@@ -147,9 +147,3 @@ def publish_command(zone, device, command):
 
 def publish_security_mode(enabled):
     publish_command("system", "security_mode", "ON" if enabled else "OFF")
-
-
-def publish_authorized_nfc_tags():
-    """Replace the ESP32 allow-list with the cards registered on the site."""
-    tags = NFCRegisteredCard.objects.values_list("tag_id", flat=True)
-    publish_command("entrance", "nfc_authorized", ",".join(tags))

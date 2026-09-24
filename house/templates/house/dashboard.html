@@ -133,7 +133,7 @@
       </div>
     </section>
 
-    <section class="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2" aria-label="NFC access controls">
+    <section class="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2" aria-label="NFC audit controls">
       <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
         <div class="flex items-center justify-between gap-3 border-b border-slate-200 pb-4 dark:border-slate-800"><div><h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">NFC activity</h2><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Recent access events</p></div><span class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Latest reads</span></div>
         <div class="mt-1 max-h-64 overflow-auto text-sm">
@@ -147,13 +147,13 @@
       </article>
 
       <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
-        <div class="border-b border-slate-200 pb-4 dark:border-slate-800"><h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Register NFC card</h2><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Registered cards can open the entrance door.</p></div>
-        <form method="post" action="{% url 'register_nfc_card' %}" class="mt-4 grid gap-4">{% csrf_token %}
+        <div class="border-b border-slate-200 pb-4 dark:border-slate-800"><h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Add NFC audit entry</h2><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Record an administrative access decision.</p></div>
+        <form method="post" action="{% url 'add_nfc_log' %}" class="mt-4 grid gap-4">{% csrf_token %}
           <div><label for="tag-id" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tag ID</label><input id="tag-id" required name="tag_id" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-600 dark:focus:border-blue-500 dark:focus:ring-blue-500/25" aria-describedby="tag-id-help"><p id="tag-id-help" class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Use the ID reported by the NFC reader.</p></div>
           <div><label for="nfc-note" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Note <span class="font-normal normal-case tracking-normal">(optional)</span></label><input id="nfc-note" name="note" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-600 dark:focus:border-blue-500 dark:focus:ring-blue-500/25"></div>
-          <button class="min-h-11 w-full rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900">Register card</button>
+          <div><label for="nfc-access" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Access</label><select id="nfc-access" name="granted" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-500 dark:focus:ring-blue-500/25"><option value="1">Granted</option><option value="0">Denied</option></select></div>
+          <button class="min-h-11 w-full rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900">Save log</button>
         </form>
-        <div class="mt-5 border-t border-slate-200 pt-4 dark:border-slate-800"><p class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Registered cards</p><ul class="mt-2 space-y-2 text-sm">{% for card in registered_cards %}<li class="flex justify-between gap-3"><span class="font-mono">{{ card.tag_id }}</span><span class="text-slate-500 dark:text-slate-400">{{ card.note }}</span></li>{% empty %}<li class="text-slate-500 dark:text-slate-400">No cards registered.</li>{% endfor %}</ul></div>
       </article>
     </section>
   </main>

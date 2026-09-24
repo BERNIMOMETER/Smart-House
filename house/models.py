@@ -38,16 +38,3 @@ class NFCAuditLog(models.Model):
 
     def __str__(self):
         return f"{self.tag_id} ({'granted' if self.granted else 'denied'})"
-
-
-class NFCRegisteredCard(models.Model):
-    """NFC cards currently allowed to open the entrance door."""
-    tag_id = models.CharField(max_length=32, unique=True)
-    note = models.CharField(max_length=255, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["tag_id"]
-
-    def __str__(self):
-        return self.tag_id
