@@ -4,4 +4,4 @@ channels-redis>=4.2,<5.0
 paho-mqtt>=2.0,<3.0
 gunicorn>=23.0,<24.0
 python-dotenv>=1.0,<2.0
-uvicorn>=0.30,<1.0
+uvicorn[standard]>=0.30,<1.0

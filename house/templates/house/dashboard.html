@@ -182,6 +182,7 @@
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
       let socket;
       let retryTimer;
+      let heartbeatTimer;
 
       const setStatus = (text, className) => {
         status.textContent = text;
@@ -205,7 +206,13 @@
 
       const connect = () => {
         socket = new WebSocket(`${protocol}://${window.location.host}/ws/updates/`);
-        socket.onopen = () => setStatus('Live updates connected', 'text-emerald-700 dark:text-emerald-400');
+        socket.onopen = () => {
+          setStatus('Live updates connected', 'text-emerald-700 dark:text-emerald-400');
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({type: 'ping'}));
+          }, 20000);
+        };
         socket.onmessage = (event) => {
           try {
             const message = JSON.parse(event.data);
@@ -213,6 +220,7 @@
           } catch (error) {}
         };
         socket.onclose = () => {
+          clearInterval(heartbeatTimer);
           setStatus('Reconnecting to live updates...', 'text-amber-700 dark:text-amber-400');
           clearTimeout(retryTimer);
           retryTimer = setTimeout(connect, 3000);
