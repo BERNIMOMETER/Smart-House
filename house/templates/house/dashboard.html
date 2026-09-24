@@ -27,7 +27,7 @@
       <div class="flex flex-wrap items-center gap-3">
         <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <p class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dashboard status</p>
-          <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">Three monitored zones</p>
+          <p id="ws-status" class="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-400">Connecting to live updates...</p>
         </div>
         <button id="theme-toggle" type="button" class="min-h-11 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-950" aria-pressed="false">
           <span id="theme-toggle-label">Dark mode</span>
@@ -60,7 +60,7 @@
             <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-300">Zone 01</span>
           </div>
           <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Smoke</dt><dd class="font-semibold {% if status.kitchen_living_mq2.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_mq2 %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_mq2.value.state|default:'No data' }}</dd></div>
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Smoke</dt><dd data-live-state="kitchen_living/mq2" class="font-semibold {% if status.kitchen_living_mq2.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_mq2 %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_mq2.value.state|default:'No data' }}</dd></div>
             <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Exhaust fan</dt><dd class="font-semibold {% if status.kitchen_living_fan %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_fan.value.state|default:'No data' }}</dd></div>
             <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Buzzer</dt><dd class="font-semibold {% if status.kitchen_living_buzzer.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_buzzer %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_buzzer.value.state|default:'No data' }}</dd></div>
             <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Living motion</dt><dd class="font-semibold {% if status.kitchen_living_pir.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_pir %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_pir.value.state|default:'No data' }}</dd></div>
@@ -76,8 +76,8 @@
             <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-300">Zone 02</span>
           </div>
           <div class="mt-4 grid grid-cols-2 gap-3 border-b border-slate-200 pb-4 dark:border-slate-800">
-            <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950/50"><p class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Temperature</p><p class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">{{ status.bedroom_dht11.value.temp|default:'--' }}<span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">°C</span></p></div>
-            <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950/50"><p class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Humidity</p><p class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">{{ status.bedroom_dht11.value.humidity|default:'--' }}<span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">% RH</span></p></div>
+            <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950/50"><p class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Temperature</p><p class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100"><span data-live-field="bedroom/dht11/temp">{{ status.bedroom_dht11.value.temp|default:'--' }}</span><span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">°C</span></p></div>
+            <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950/50"><p class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Humidity</p><p class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100"><span data-live-field="bedroom/dht11/humidity">{{ status.bedroom_dht11.value.humidity|default:'--' }}</span><span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">% RH</span></p></div>
           </div>
           <div class="mt-4 space-y-4">
             {% include 'house/control.html' with zone='bedroom' device='fan' title='Fan (auto at ≥ 30°C)' state=status.bedroom_fan.value.state auto=True manual_override=status.bedroom_fan.manual_override %}
@@ -91,7 +91,7 @@
             <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-300">Zone 03</span>
           </div>
           <dl class="mt-4 grid gap-3 border-b border-slate-200 pb-4 text-sm dark:border-slate-800">
-            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Ambient light</dt><dd class="font-semibold {% if status.entrance_ldr %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.entrance_ldr.value.raw|default:'No data' }}</dd></div>
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Ambient light</dt><dd data-live-field="entrance/ldr/raw" class="font-semibold {% if status.entrance_ldr %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.entrance_ldr.value.raw|default:'No data' }}</dd></div>
             <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Entrance motion</dt><dd class="font-semibold {% if status.entrance_pir.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.entrance_pir %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.entrance_pir.value.state|default:'No data' }}</dd></div>
           </dl>
           <div class="mt-4 space-y-4">
@@ -175,6 +175,52 @@
       };
       updateTheme(document.documentElement.classList.contains('dark'));
       button.addEventListener('click', () => updateTheme(!document.documentElement.classList.contains('dark'), true));
+    })();
+
+    (() => {
+      const status = document.getElementById('ws-status');
+      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      let socket;
+      let retryTimer;
+
+      const setStatus = (text, className) => {
+        status.textContent = text;
+        status.className = `mt-1 text-sm font-semibold ${className}`;
+      };
+
+      const renderState = ({ zone, device, value }) => {
+        const key = `${zone}/${device}`;
+        const state = typeof value === 'object' && value !== null ? value.state : value;
+        document.querySelectorAll(`[data-live-state="${key}"]`).forEach((element) => {
+          element.textContent = state ?? 'No data';
+        });
+        if (typeof value === 'object' && value !== null) {
+          Object.entries(value).forEach(([field, fieldValue]) => {
+            document.querySelectorAll(`[data-live-field="${key}/${field}"]`).forEach((element) => {
+              element.textContent = fieldValue;
+            });
+          });
+        }
+      };
+
+      const connect = () => {
+        socket = new WebSocket(`${protocol}://${window.location.host}/ws/updates/`);
+        socket.onopen = () => setStatus('Live updates connected', 'text-emerald-700 dark:text-emerald-400');
+        socket.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            if (message.type === 'state') renderState(message);
+          } catch (error) {}
+        };
+        socket.onclose = () => {
+          setStatus('Reconnecting to live updates...', 'text-amber-700 dark:text-amber-400');
+          clearTimeout(retryTimer);
+          retryTimer = setTimeout(connect, 3000);
+        };
+        socket.onerror = () => socket.close();
+      };
+
+      connect();
     })();
   </script>
 </body>

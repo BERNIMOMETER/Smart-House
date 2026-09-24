@@ -358,6 +358,7 @@ void checkNfc() {
     if (rfid.uid.uidByte[index] < 16) uid += "0";
     uid += String(rfid.uid.uidByte[index], HEX);
   }
+  Serial.printf("RFID scanned UID: %s\n", uid.c_str());
 
   // Debounce: MIFARE tags can be re-read several times in one tap if they
   // linger near the reader, which used to fire openDoor()/publish repeatedly.
@@ -370,6 +371,7 @@ void checkNfc() {
   lastNfcMillis = now;
 
   bool granted = allowedTag(uid);
+  Serial.printf("RFID access: %s\n", granted ? "AUTHORIZED" : "DENIED");
   if (granted) {
     openDoor();
     // A valid entry should silence an entrance alarm that was tripped by the

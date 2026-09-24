@@ -39,7 +39,7 @@ Install base packages:
 
 ```bash
 sudo apt update
-sudo apt install -y git python3 python3-venv python3-pip ca-certificates sqlite3
+sudo apt install -y git python3 python3-venv python3-pip ca-certificates sqlite3 redis-server
 ```
 
 Create a dedicated service account and place a checkout at `/opt/smarthouse`. The account must own the checkout because it writes `db.sqlite3` and `staticfiles`.
@@ -79,6 +79,7 @@ Set these values in `/etc/smarthouse/smarthouse.env`:
 | `MQTT_TLS_CA_CERTS` | Blank for the Raspberry Pi system CA store, or a PEM bundle path if HiveMQ requires one. |
 | `MQTT_CLIENT_ID` | A unique base, such as `smarthouse-django`. |
 | `MQTT_TOPIC_PREFIX` | `smarthouse`, matching the ESP32. |
+| `REDIS_URL` | `redis://127.0.0.1:6379/0`, for dashboard WebSockets. |
 
 The file is parsed by systemd. Quote values containing spaces or shell-sensitive characters. Generate a suitable Django secret with:
 
@@ -122,6 +123,14 @@ sudo journalctl -u smarthouse-mqtt -f
 After a code update, reinstall dependencies if needed, run migrations/`collectstatic`, then restart both services:
 
 ```bash
+sudo systemctl restart smarthouse-web smarthouse-mqtt
+```
+
+The dashboard uses a WebSocket at `/ws/updates/`. Redis carries MQTT state events
+from the bridge process to ASGI web workers, so keep `redis-server` enabled:
+
+```bash
+sudo systemctl enable --now redis-server
 sudo systemctl restart smarthouse-web smarthouse-mqtt
 ```
 

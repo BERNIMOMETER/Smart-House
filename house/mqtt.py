@@ -4,6 +4,8 @@ import logging
 import uuid
 
 import paho.mqtt.client as mqtt
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.conf import settings
 
 from .models import DeviceState, NFCAuditLog, SystemState
@@ -56,6 +58,19 @@ def save_state(zone, device, payload):
     DeviceState.objects.update_or_create(zone=zone, device=device, defaults={"value": value})
 
 
+def broadcast_state(zone, device, value):
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        return
+    try:
+        async_to_sync(channel_layer.group_send)(
+            "smarthouse_state",
+            {"type": "device.state", "payload": {"type": "state", "zone": zone, "device": device, "value": value}},
+        )
+    except Exception:
+        LOG.exception("Could not broadcast %s/%s to dashboard clients", zone, device)
+
+
 class MQTTBridge:
     """Long-running subscriber used by `python manage.py mqtt_bridge`."""
     def __init__(self):
@@ -89,6 +104,7 @@ class MQTTBridge:
                 value = _parse(message.payload)
                 state = value.get("state", value) if isinstance(value, dict) else value
                 SystemState.objects.update_or_create(pk=1, defaults={"security_mode": str(state).upper() == "ON"})
+                broadcast_state("system", "security_mode", {"state": state})
                 return
             # <prefix>/<zone>/<device>/state
             if not parts or len(parts) != 3 or parts[2] != "state":
@@ -96,6 +112,7 @@ class MQTTBridge:
             zone, device = parts[0], parts[1]
             value = _parse(message.payload)
             save_state(zone, device, value)
+            broadcast_state(zone, device, value)
             # NFC event is published as {tag_id, granted, note}; keep an immutable audit entry.
             if zone == "entrance" and device == "nfc" and isinstance(value, dict) and "tag_id" in value:
                 NFCAuditLog.objects.create(
