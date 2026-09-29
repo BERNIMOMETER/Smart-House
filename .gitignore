@@ -15,5 +15,3 @@ staticfiles/
 .env.*
 !.env.example
 
-# ESP32 secrets/config
-firmware/config.h
