@@ -282,11 +282,13 @@
             const zone = formData.get('zone');
             const device = formData.get('device');
             const command = formData.get('command');
-            if (zone && device && command && command !== 'AUTO') {
-              const state = command === 'OPEN' ? 'OPEN' : command;
-              document.querySelectorAll(`[data-live-state="${zone}/${device}"]`).forEach((element) => {
-                element.textContent = state;
-              });
+            if (zone && device && command) {
+              if (command !== 'AUTO') {
+                const state = command === 'OPEN' ? 'OPEN' : command;
+                document.querySelectorAll(`[data-live-state="${zone}/${device}"]`).forEach((element) => {
+                  element.textContent = state;
+                });
+              }
               if (command === 'ON' || command === 'OFF') {
                 document.querySelectorAll(`[data-control-input="${zone}/${device}"]`).forEach((element) => {
                   element.checked = command === 'ON';
@@ -296,6 +298,14 @@
                 });
                 document.querySelectorAll(`[data-control-value="${zone}/${device}"]`).forEach((element) => {
                   element.textContent = command;
+                });
+              }
+              if (form.matches('[data-auto-form]')) {
+                document.querySelectorAll(`[data-auto-input="${zone}/${device}"]`).forEach((element) => {
+                  element.checked = command === 'AUTO';
+                });
+                document.querySelectorAll(`[data-auto-knob="${zone}/${device}"]`).forEach((element) => {
+                  element.classList.toggle('translate-x-5', command === 'AUTO');
                 });
               }
             }
@@ -309,9 +319,8 @@
               });
               form.querySelector('input[name="enabled"]').value = armed ? '0' : '1';
             }
-            if (form.action.endsWith('/nfc/authorize/')) {
+            if (target.endsWith('/nfc/authorize/')) {
               updateAuthorizedCard(formData.get('tag_id'), formData.get('enabled') === '1');
-              closeRevokeModal();
             }
             showNotification(message || 'Command sent. The ESP will report state back when it updates.', false);
           } catch (error) {
@@ -328,6 +337,13 @@
         input.addEventListener('change', () => {
           const form = input.closest('form');
           form.querySelector('input[name="command"]').value = input.checked ? 'ON' : 'OFF';
+          form.requestSubmit();
+        });
+      });
+      document.querySelectorAll('[data-auto-input]').forEach((input) => {
+        input.addEventListener('change', () => {
+          const form = input.closest('form');
+          form.querySelector('input[name="command"]').value = input.checked ? 'AUTO' : 'OFF';
           form.requestSubmit();
         });
       });

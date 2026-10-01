@@ -25,11 +25,17 @@
           </div>
       </form>
       {% if auto %}
-        <form method="post" action="{% url 'control_device' %}">{% csrf_token %}
+        <form method="post" action="{% url 'control_device' %}" data-auto-form>{% csrf_token %}
           <input type="hidden" name="zone" value="{{ zone }}">
           <input type="hidden" name="device" value="{{ device }}">
           <input type="hidden" name="command" value="AUTO">
-          <button aria-label="Set {{ title }} to automatic mode" aria-pressed="{% if state and not manual_override %}true{% else %}false{% endif %}" class="min-h-11 min-w-11 rounded-lg border px-4 py-2 font-mono text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900 {% if state and not manual_override %}border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500{% else %}border-slate-200 bg-white text-slate-600 hover:border-blue-600 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:bg-slate-800{% endif %}">AUTO</button>
+          <div class="flex items-center gap-3">
+            <input id="auto-{{ zone }}-{{ device }}" data-auto-input="{{ zone }}/{{ device }}" type="checkbox" class="peer sr-only" {% if not manual_override and state %}checked{% endif %}>
+            <label for="auto-{{ zone }}-{{ device }}" class="relative h-7 w-12 cursor-pointer rounded-full bg-slate-300 transition peer-checked:bg-blue-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-600 peer-focus:ring-offset-2 dark:bg-slate-700 dark:peer-checked:bg-blue-500 dark:peer-focus:ring-blue-500 dark:peer-focus:ring-offset-slate-950" aria-label="Toggle automatic mode for {{ title }}">
+              <span data-auto-knob="{{ zone }}/{{ device }}" class="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform {% if not manual_override and state %}translate-x-5{% endif %}"></span>
+            </label>
+            <span data-auto-value="{{ zone }}/{{ device }}" class="font-mono text-xs font-bold">AUTO</span>
+          </div>
         </form>
       {% endif %}
     {% endif %}
