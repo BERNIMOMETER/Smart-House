@@ -202,8 +202,14 @@
         revokeModal.hidden = false;
       };
       const closeRevokeModal = () => { revokeModal.hidden = true; };
+      closeRevokeModal();
+      window.addEventListener('pageshow', closeRevokeModal);
       document.querySelectorAll('[data-revoke-card]').forEach((button) => {
-        button.addEventListener('click', () => openRevokeModal(button.dataset.revokeCard));
+        button.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          openRevokeModal(button.dataset.revokeCard);
+        });
       });
       document.querySelector('[data-close-revoke-modal]').addEventListener('click', closeRevokeModal);
       revokeModal.addEventListener('click', (event) => {
@@ -234,7 +240,11 @@
         revokeButton.dataset.revokeCard = tagId;
         revokeButton.className = 'break-all font-mono text-left text-slate-900 hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-400';
         revokeButton.textContent = tagId;
-        revokeButton.addEventListener('click', () => openRevokeModal(tagId));
+        revokeButton.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          openRevokeModal(tagId);
+        });
         row.append(revokeButton);
         list.append(row);
       };
