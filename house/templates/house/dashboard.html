@@ -209,7 +209,7 @@
               message = messageElement ? messageElement.textContent : '';
             }
             if (!response.ok) throw new Error(message || 'Command could not be sent. Check the connection and try again.');
-            showNotification(message || 'Command sent. Waiting for device state...', false);
+            showNotification(message || 'Command sent. The ESP will report state back when it updates.', false);
           } catch (error) {
             showNotification(error.message || 'Command could not be sent. Check the connection and try again.', true);
           } finally {

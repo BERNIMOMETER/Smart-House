@@ -18,6 +18,11 @@ class MQTTBridgeTests(TestCase):
         state = DeviceState.objects.get(zone="bedroom", device="dht11")
         self.assertEqual(state.value, {"temp": 30.0, "humidity": 65.0})
 
+    @override_settings(DEBUG=True)
+    def test_local_debug_uses_in_memory_channel_layer(self):
+        from django.conf import settings as django_settings
+        self.assertEqual(django_settings.CHANNEL_LAYERS["default"]["BACKEND"], "channels.layers.InMemoryChannelLayer")
+
     def test_nfc_event_creates_an_audit_log_and_current_state(self):
         self.send("smarthouse/entrance/nfc/state", '{"tag_id":"abc123","granted":true}')
         self.assertEqual(NFCAuditLog.objects.count(), 1)
@@ -52,6 +57,7 @@ class MQTTBridgeTests(TestCase):
         client.reconnect_delay_set.assert_called_once_with(min_delay=1, max_delay=60)
 
     @patch("house.mqtt.mqtt.Client")
+    @override_settings(MQTT_HOST="localhost", MQTT_PORT=1883)
     def test_bridge_uses_async_connection_and_forever_retry_loop(self, client_class):
         client = client_class.return_value
         bridge = MQTTBridge()
@@ -60,6 +66,7 @@ class MQTTBridgeTests(TestCase):
         client.loop_forever.assert_called_once_with(retry_first_connection=True)
 
     @patch("house.mqtt.mqtt.Client")
+    @override_settings(MQTT_HOST="localhost", MQTT_PORT=1883)
     def test_command_publish_runs_network_loop_until_delivery(self, client_class):
         client = client_class.return_value
         result = client.publish.return_value
