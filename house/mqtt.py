@@ -137,6 +137,8 @@ class MQTTBridge:
 
 def publish_command(zone, device, command):
     """Publish one retained command so reconnecting ESP32 nodes receive it."""
+    command_topic = topic(zone, device, "set")
+    LOG.info("Publishing MQTT command topic=%s command=%s", command_topic, command)
     client = _configure_client(mqtt.Client(
         mqtt.CallbackAPIVersion.VERSION2,
         client_id=_client_id("command", unique=True),
@@ -148,12 +150,13 @@ def publish_command(zone, device, command):
         connected = True
         client.loop_start()
         loop_started = True
-        result = client.publish(topic(zone, device, "set"), command, retain=True)
+        result = client.publish(command_topic, command, retain=True)
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
             raise MQTTCommandError("MQTT client did not accept the command for publishing.")
         result.wait_for_publish(timeout=5)
         if not result.is_published():
             raise MQTTCommandError("Timed out waiting for MQTT command delivery.")
+        LOG.info("MQTT command published topic=%s command=%s", command_topic, command)
     except MQTTCommandError:
         raise
     except (OSError, RuntimeError, ValueError) as error:
