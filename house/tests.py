@@ -77,7 +77,7 @@ class MQTTBridgeTests(TestCase):
 
         client.connect.assert_called_once_with("localhost", 1883, keepalive=20)
         client.loop_start.assert_called_once_with()
-        client.publish.assert_called_once_with("smarthouse/bedroom/fan/set", "ON", retain=True)
+        client.publish.assert_called_once_with("smarthouse/bedroom/fan/set", "ON", qos=1, retain=True)
         result.wait_for_publish.assert_called_once_with(timeout=5)
         client.loop_stop.assert_called_once_with()
         client.disconnect.assert_called_once_with()

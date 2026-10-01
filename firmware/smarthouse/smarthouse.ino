@@ -15,6 +15,8 @@
 
 #if MQTT_TLS
 #define NTP_SERVER "pool.ntp.org"
+#define NTP_SERVER_BACKUP_1 "time.nist.gov"
+#define NTP_SERVER_BACKUP_2 "time.google.com"
 static const char MQTT_ROOT_CA[] = R"EOF(
 -----BEGIN CERTIFICATE-----
 MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
@@ -104,6 +106,7 @@ constexpr unsigned long SENSOR_INTERVAL_MS = 5000;
 constexpr unsigned long REPORT_INTERVAL_MS = 10000;
 constexpr unsigned long MQTT_RETRY_INTERVAL_MS = 3000;
 constexpr unsigned long WIFI_RETRY_INTERVAL_MS = 5000;
+constexpr unsigned long NTP_RETRY_INTERVAL_MS = 30000;
 constexpr unsigned long NFC_DEBOUNCE_MS = 3000;
 constexpr byte MAX_AUTHORISED_UIDS = 32;
 
@@ -141,6 +144,10 @@ unsigned long lastSensorRead = 0;
 unsigned long lastReport = 0;
 unsigned long lastMqttAttempt = 0;
 unsigned long lastWifiAttempt = 0;
+#if MQTT_TLS
+unsigned long lastNtpAttempt = 0;
+bool tlsClockReady = false;
+#endif
 String lastNfcUid = "";
 unsigned long lastNfcMillis = 0;
 String authorisedUids[MAX_AUTHORISED_UIDS];
@@ -157,19 +164,25 @@ String commandTopic(const char *zone, const char *device) {
 }
 
 #if MQTT_TLS
-void synchroniseClockForTls() {
-  configTime(0, 0, NTP_SERVER);
+bool synchroniseClockForTls() {
+  configTime(0, 0, NTP_SERVER, NTP_SERVER_BACKUP_1, NTP_SERVER_BACKUP_2);
   struct tm timeInfo;
-  for (int attempt = 0; attempt < 20; ++attempt) {
-    if (getLocalTime(&timeInfo, 500)) {
+  for (int attempt = 0; attempt < 10; ++attempt) {
+    if (getLocalTime(&timeInfo, 1000)) {
       Serial.println("NTP clock synchronized for TLS");
-      return;
+      return true;
     }
-    delay(500);
   }
-  // NTP continues in the background. MQTT retries will begin succeeding once
-  // the clock is set; certificate validation is never disabled as a fallback.
-  Serial.println("NTP clock not ready; MQTT TLS will retry after synchronization");
+  Serial.println("NTP clock not ready; TLS MQTT is paused until time synchronizes");
+  return false;
+}
+
+void maintainTlsClock() {
+  if (tlsClockReady) return;
+  unsigned long now = millis();
+  if (now - lastNtpAttempt < NTP_RETRY_INTERVAL_MS) return;
+  lastNtpAttempt = now;
+  tlsClockReady = synchroniseClockForTls();
 }
 #endif
 
@@ -291,11 +304,20 @@ void onMessage(char *topic, byte *payload, unsigned int length) {
 // outage instead of freezing the whole controller.
 void maintainMqtt() {
   if (mqtt.connected()) return;
+#if MQTT_TLS
+  if (!tlsClockReady) {
+    Serial.println("Waiting for a valid NTP clock before MQTT TLS connection");
+    return;
+  }
+#endif
   unsigned long now = millis();
   if (now - lastMqttAttempt < MQTT_RETRY_INTERVAL_MS) return;
   lastMqttAttempt = now;
 
   Serial.printf("MQTT connecting to %s:%d, free heap: %u\n", MQTT_HOST, MQTT_PORT, ESP.getFreeHeap());
+#if MQTT_TLS
+  Serial.println("MQTT TLS enabled; validating certificate against broker root CA.");
+#endif
   if (mqtt.connect(MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD)) {
     Serial.println("MQTT connected");
     const char *topics[] = {
@@ -544,7 +566,12 @@ void setup() {
     Serial.println(WiFi.localIP());
   }
 #if MQTT_TLS
-  if (WiFi.status() == WL_CONNECTED) synchroniseClockForTls();
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("Starting TLS clock sync before MQTT connect...");
+    lastNtpAttempt = millis();
+    tlsClockReady = synchroniseClockForTls();
+    Serial.println("TLS clock sync attempt finished");
+  }
 #endif
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
   mqtt.setCallback(onMessage);
@@ -553,6 +580,9 @@ void setup() {
 void loop() {
   maintainWifi();
   if (WiFi.status() == WL_CONNECTED) {
+#if MQTT_TLS
+    maintainTlsClock();
+#endif
     maintainMqtt();
     mqtt.loop();
   }

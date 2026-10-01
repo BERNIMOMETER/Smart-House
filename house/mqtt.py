@@ -150,7 +150,9 @@ def publish_command(zone, device, command):
         connected = True
         client.loop_start()
         loop_started = True
-        result = client.publish(command_topic, command, retain=True)
+        # QoS 1 makes the broker acknowledge the command before this short-lived
+        # publisher disconnects; QoS 0 can be lost during that disconnect.
+        result = client.publish(command_topic, command, qos=1, retain=True)
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
             raise MQTTCommandError("MQTT client did not accept the command for publishing.")
         result.wait_for_publish(timeout=5)
