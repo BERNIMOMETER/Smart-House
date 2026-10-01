@@ -321,6 +321,7 @@
             }
             if (target.endsWith('/nfc/authorize/')) {
               updateAuthorizedCard(formData.get('tag_id'), formData.get('enabled') === '1');
+              if (formData.get('enabled') === '0') closeRevokeModal();
             }
             showNotification(message || 'Command sent. The ESP will report state back when it updates.', false);
           } catch (error) {
