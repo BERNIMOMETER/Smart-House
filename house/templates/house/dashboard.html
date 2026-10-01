@@ -119,10 +119,10 @@
             <div><h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Security</h3><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Alarm state and access control</p></div>
             <form method="post" action="{% url 'set_security_mode' %}">{% csrf_token %}
               <input type="hidden" name="enabled" value="{{ system.security_mode|yesno:'0,1' }}">
-              <button class="min-h-11 rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900">{{ system.security_mode|yesno:'Disarm security,Arm security' }}</button>
+              <button data-security-toggle type="submit" class="min-h-11 rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900"><span data-security-label>{{ system.security_mode|yesno:'Disarm security,Arm security' }}</span></button>
             </form>
           </div>
-          <div class="mt-4 flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 {% if system.security_mode %}border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400{% else %}border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300{% endif %}"><p class="font-mono text-xs font-semibold uppercase tracking-wider">Security mode</p><p class="text-sm font-bold">{{ system.security_mode|yesno:'ARMED,DISARMED' }}</p></div>
+          <div class="mt-4 flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 {% if system.security_mode %}border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400{% else %}border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300{% endif %}"><p class="font-mono text-xs font-semibold uppercase tracking-wider">Security mode</p><p data-live-state="system/security_mode" class="text-sm font-bold">{{ system.security_mode|yesno:'ARMED,DISARMED' }}</p></div>
           <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Smoke alert</dt><dd class="font-semibold {% if status.kitchen_living_mq2.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_mq2 %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_mq2.value.state|default:'No data' }}</dd></div>
             <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Buzzer</dt><dd class="font-semibold {% if status.kitchen_living_buzzer.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_buzzer %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_buzzer.value.state|default:'No data' }}</dd></div>
@@ -148,8 +148,8 @@
 
       <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
         <div class="border-b border-slate-200 pb-4 dark:border-slate-800"><h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Authorized NFC cards</h2><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Cards currently accepted by the door controller.</p></div>
-        <div class="mt-1 max-h-40 overflow-auto text-sm">
-          {% for card in registered_cards %}<div class="flex items-center justify-between gap-3 border-b border-slate-200 py-3 last:border-b-0 dark:border-slate-800"><span class="break-all font-mono">{{ card.tag_id }}</span><form method="post" action="{% url 'set_nfc_authorization' %}">{% csrf_token %}<input type="hidden" name="tag_id" value="{{ card.tag_id }}"><input type="hidden" name="enabled" value="0"><button class="text-xs font-bold text-red-600 hover:text-red-500 dark:text-red-400">Revoke</button></form></div>{% empty %}<p class="py-4 text-sm text-slate-400">No cards authorized.</p>{% endfor %}
+        <div id="authorized-card-list" class="mt-1 max-h-40 overflow-auto text-sm">
+          {% for card in registered_cards %}<div data-authorized-card="{{ card.tag_id }}" class="flex items-center justify-between gap-3 border-b border-slate-200 py-3 last:border-b-0 dark:border-slate-800"><span class="break-all font-mono">{{ card.tag_id }}</span><form method="post" action="{% url 'set_nfc_authorization' %}">{% csrf_token %}<input type="hidden" name="tag_id" value="{{ card.tag_id }}"><input type="hidden" name="enabled" value="0"><button class="text-xs font-bold text-red-600 hover:text-red-500 dark:text-red-400">Revoke</button></form></div>{% empty %}<p data-authorized-empty class="py-4 text-sm text-slate-400">No cards authorized.</p>{% endfor %}
         </div>
         <div class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800"><h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Authorize a scanned card</h3>
         <form method="post" action="{% url 'add_nfc_log' %}" class="mt-4 grid gap-4">{% csrf_token %}
@@ -184,8 +184,38 @@
         notificationArea.querySelector('p').textContent = text;
       };
 
-      document.querySelectorAll('form[method="post"]').forEach((form) => {
-        form.addEventListener('submit', async (event) => {
+      const updateAuthorizedCard = (tagId, enabled) => {
+        if (!tagId) return;
+        const list = document.getElementById('authorized-card-list');
+        const existing = list.querySelector(`[data-authorized-card="${tagId}"]`);
+        if (!enabled) {
+          existing?.remove();
+          if (!list.querySelector('[data-authorized-card]')) {
+            list.innerHTML = '<p data-authorized-empty class="py-4 text-sm text-slate-400">No cards authorized.</p>';
+          }
+          return;
+        }
+        if (existing) return;
+        list.querySelector('[data-authorized-empty]')?.remove();
+        const row = document.createElement('div');
+        row.dataset.authorizedCard = tagId;
+        row.className = 'flex items-center justify-between gap-3 border-b border-slate-200 py-3 last:border-b-0 dark:border-slate-800';
+        const label = document.createElement('span');
+        label.className = 'break-all font-mono';
+        label.textContent = tagId;
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.action = '/nfc/authorize/';
+        form.innerHTML = '<input type="hidden" name="csrfmiddlewaretoken"><input type="hidden" name="tag_id"><input type="hidden" name="enabled" value="0"><button class="text-xs font-bold text-red-600 hover:text-red-500 dark:text-red-400">Revoke</button>';
+        form.querySelector('[name="csrfmiddlewaretoken"]').value = document.querySelector('[name="csrfmiddlewaretoken"]').value;
+        form.querySelector('[name="tag_id"]').value = tagId;
+        row.append(label, form);
+        list.append(row);
+        form.addEventListener('submit', handleFormSubmit);
+      };
+
+      const handleFormSubmit = async (event) => {
+          const form = event.currentTarget;
           event.preventDefault();
           const submitter = event.submitter;
           const formData = new FormData(form);
@@ -210,13 +240,38 @@
               message = messageElement ? messageElement.textContent : '';
             }
             if (!response.ok) throw new Error(message || 'Command could not be sent. Check the connection and try again.');
+            const zone = formData.get('zone');
+            const device = formData.get('device');
+            const command = formData.get('command');
+            if (zone && device && command && command !== 'AUTO') {
+              const state = command === 'OPEN' ? 'OPEN' : command;
+              document.querySelectorAll(`[data-live-state="${zone}/${device}"]`).forEach((element) => {
+                element.textContent = state;
+              });
+            }
+            if (form.action.endsWith('/security/')) {
+              const armed = formData.get('enabled') === '1';
+              document.querySelectorAll('[data-security-label]').forEach((element) => {
+                element.textContent = armed ? 'Disarm security' : 'Arm security';
+              });
+              document.querySelectorAll('[data-live-state="system/security_mode"]').forEach((element) => {
+                element.textContent = armed ? 'ARMED' : 'DISARMED';
+              });
+              form.querySelector('input[name="enabled"]').value = armed ? '0' : '1';
+            }
+            if (form.action.endsWith('/nfc/authorize/')) {
+              updateAuthorizedCard(formData.get('tag_id'), formData.get('enabled') === '1');
+            }
             showNotification(message || 'Command sent. The ESP will report state back when it updates.', false);
           } catch (error) {
             showNotification(error.message || 'Command could not be sent. Check the connection and try again.', true);
           } finally {
             buttons.forEach((button) => { button.disabled = false; });
           }
-        });
+      };
+
+      document.querySelectorAll('form[method="post"]').forEach((form) => {
+        form.addEventListener('submit', handleFormSubmit);
       });
     })();
 
@@ -243,6 +298,18 @@
             document.querySelectorAll(`[data-live-field="${key}/${field}"]`).forEach((element) => {
               element.textContent = fieldValue;
             });
+          });
+        }
+        if (key === 'system/security_mode') {
+          const armed = String(state).toUpperCase() === 'ON';
+          document.querySelectorAll('[data-security-label]').forEach((element) => {
+            element.textContent = armed ? 'Disarm security' : 'Arm security';
+          });
+          document.querySelectorAll('form[action="/security/"] input[name="enabled"]').forEach((element) => {
+            element.value = armed ? '0' : '1';
+          });
+          document.querySelectorAll('[data-live-state="system/security_mode"]').forEach((element) => {
+            element.textContent = armed ? 'ARMED' : 'DISARMED';
           });
         }
       };
