@@ -173,6 +173,7 @@
       </div>
     </div>
   </div>
+  <div id="toast-notifications" class="fixed right-4 top-4 z-40 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3" aria-live="polite" aria-atomic="true"></div>
   <script>
     (() => {
       const button = document.getElementById('theme-toggle');
@@ -188,10 +189,19 @@
     })();
 
     (() => {
-      const notificationArea = document.querySelector('[aria-label="System notifications"]');
+      const toastNotifications = document.getElementById('toast-notifications');
       const showNotification = (text, isError = false) => {
-        notificationArea.innerHTML = `<div class="flex min-w-0 items-start gap-3 rounded-xl border px-4 py-3 text-sm ${isError ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400' : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400'}"><span class="mt-0.5 shrink-0 font-bold" aria-hidden="true">${isError ? '!' : 'i'}</span><p class="min-w-0 break-words"></p></div>`;
-        notificationArea.querySelector('p').textContent = text;
+        const toast = document.createElement('div');
+        toast.className = `flex items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-lg ${isError ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400' : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400'}`;
+        const icon = document.createElement('span');
+        icon.className = 'shrink-0 font-bold';
+        icon.textContent = isError ? '!' : 'i';
+        const message = document.createElement('p');
+        message.className = 'min-w-0 break-words';
+        message.textContent = text;
+        toast.append(icon, message);
+        toastNotifications.append(toast);
+        setTimeout(() => toast.remove(), isError ? 6000 : 3500);
       };
 
       const revokeModal = document.getElementById('revoke-card-modal');
@@ -323,7 +333,20 @@
               updateAuthorizedCard(formData.get('tag_id'), formData.get('enabled') === '1');
               if (formData.get('enabled') === '0') closeRevokeModal();
             }
-            showNotification(message || 'Command sent. The ESP will report state back when it updates.', false);
+            const deviceNames = {
+              'bedroom/fan': 'Bedroom fan',
+              'bedroom/led': 'Bedroom light',
+              'entrance/outdoor_led': 'Outdoor light',
+              'entrance/door': 'Door',
+              'kitchen_living/living_led': 'Living light',
+            };
+            const commandKey = zone && device ? `${zone}/${device}` : '';
+            const friendlyMessage = form.action.endsWith('/security/')
+              ? `Security ${formData.get('enabled') === '1' ? 'armed' : 'disarmed'}.`
+              : commandKey && command
+                ? `${deviceNames[commandKey] || commandKey} ${command === 'AUTO' ? 'set to automatic mode' : command === 'OPEN' ? 'opening' : command === 'ON' ? 'turned on' : 'turned off'}.`
+                : message || 'Command sent successfully.';
+            showNotification(friendlyMessage, false);
           } catch (error) {
             showNotification(error.message || 'Command could not be sent. Check the connection and try again.', true);
           } finally {
