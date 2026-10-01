@@ -162,7 +162,7 @@
       </article>
     </section>
   </main>
-  <div id="revoke-card-modal" hidden class="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-labelledby="revoke-card-title">
+  <div id="revoke-card-modal" hidden class="fixed inset-0 z-50 hidden place-items-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-labelledby="revoke-card-title">
     <div class="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-2xl">
       <h2 id="revoke-card-title" class="text-lg font-bold text-slate-100">Revoke NFC card?</h2>
       <p class="mt-2 text-sm text-slate-400">This card will no longer open the door.</p>
@@ -200,8 +200,12 @@
         revokeForm.querySelector('[name="tag_id"]').value = tagId;
         document.getElementById('revoke-card-uid').textContent = tagId;
         revokeModal.hidden = false;
+        revokeModal.classList.remove('hidden');
       };
-      const closeRevokeModal = () => { revokeModal.hidden = true; };
+      const closeRevokeModal = () => {
+        revokeModal.hidden = true;
+        revokeModal.classList.add('hidden');
+      };
       closeRevokeModal();
       window.addEventListener('pageshow', closeRevokeModal);
       document.querySelectorAll('[data-revoke-card]').forEach((button) => {
