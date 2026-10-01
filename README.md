@@ -20,6 +20,26 @@ smarthouse/system/security_mode/state
 
 Payloads are `ON`, `OFF`, `AUTO`, or `OPEN` for commands. Sensor payloads are JSON, such as `{"temp":30.0,"humidity":65.0}`. The `MQTT_TOPIC_PREFIX` setting defaults to `smarthouse`; it must be identical in Django and `firmware/config.h`.
 
+## Local development MQTT
+
+The ESP32 sketch in this repository uses HiveMQ Cloud over TLS on port `8883`.
+Do not leave Django's development fallback (`localhost:1883`) enabled when the
+ESP32 is connected to HiveMQ, because the dashboard can publish successfully to
+the wrong broker and no device state will return. Copy `.env.example` to `.env`,
+set the same HiveMQ host, username, password, port, TLS setting, and topic
+prefix used by the firmware, then start both processes:
+
+```bat
+copy .env.example .env
+python manage.py runserver
+python manage.py mqtt_bridge
+```
+
+The bridge must remain running for device-reported state to update the
+dashboard. A command response means the MQTT broker accepted publication; the
+live state changes only after the ESP32 receives the command and publishes its
+state report.
+
 ## Production architecture
 
 ```text

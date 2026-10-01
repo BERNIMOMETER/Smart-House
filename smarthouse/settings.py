@@ -4,9 +4,6 @@ from django.core.exceptions import ImproperlyConfigured
 
 from dotenv import load_dotenv
 
-load_dotenv("/etc/smarthouse/smarthouse.env", override=True)
-
-
 def env_flag(name, default=False):
     """Read a conventional boolean environment variable."""
     value = os.environ.get(name)
@@ -19,6 +16,10 @@ def env_list(name, default=""):
     return [value.strip() for value in os.environ.get(name, default).split(",") if value.strip()]
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Load a developer checkout's ignored .env first, then let the production
+# systemd environment take precedence when it exists.
+load_dotenv(BASE_DIR / ".env")
+load_dotenv("/etc/smarthouse/smarthouse.env", override=True)
 _DEVELOPMENT_SECRET_KEY = "change-me-before-production"
 DEBUG = env_flag("DJANGO_DEBUG", default=True)
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", _DEVELOPMENT_SECRET_KEY)
