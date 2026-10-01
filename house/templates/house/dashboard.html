@@ -108,10 +108,10 @@
         <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 lg:col-span-5">
           <div class="flex items-start justify-between gap-3"><div><h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Climate</h3><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Bedroom environmental readings</p></div>{% if status.bedroom_dht11 %}<span class="rounded-lg bg-blue-600 px-2 py-1 font-mono text-xs font-semibold text-white dark:bg-blue-500">LIVE</span>{% else %}<span class="rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs font-semibold text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400">NO DATA</span>{% endif %}</div>
           <dl class="mt-4 grid grid-cols-2 gap-3">
-            <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800"><dt class="font-mono text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Temperature</dt><dd class="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">{{ status.bedroom_dht11.value.temp|default:'--' }}<span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">°C</span></dd></div>
-            <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800"><dt class="font-mono text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Humidity</dt><dd class="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">{{ status.bedroom_dht11.value.humidity|default:'--' }}<span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">% RH</span></dd></div>
+            <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800"><dt class="font-mono text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Temperature</dt><dd class="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100"><span data-live-field="bedroom/dht11/temp">{{ status.bedroom_dht11.value.temp|default:'--' }}</span><span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">°C</span></dd></div>
+            <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800"><dt class="font-mono text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Humidity</dt><dd class="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100"><span data-live-field="bedroom/dht11/humidity">{{ status.bedroom_dht11.value.humidity|default:'--' }}</span><span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">% RH</span></dd></div>
           </dl>
-          <p class="mt-4 border-t border-slate-200 pt-4 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">Fan status: <span class="font-semibold {% if status.bedroom_fan %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.bedroom_fan.value.state|default:'No data' }}</span></p>
+          <p class="mt-4 border-t border-slate-200 pt-4 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">Fan status: <span data-live-state="bedroom/fan" class="font-semibold {% if status.bedroom_fan %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.bedroom_fan.value.state|default:'No data' }}</span></p>
         </article>
 
         <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 lg:col-span-7">
@@ -124,10 +124,10 @@
           </div>
           <div class="mt-4 flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 {% if system.security_mode %}border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400{% else %}border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300{% endif %}"><p class="font-mono text-xs font-semibold uppercase tracking-wider">Security mode</p><p data-live-state="system/security_mode" class="text-sm font-bold">{{ system.security_mode|yesno:'ARMED,DISARMED' }}</p></div>
           <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Smoke alert</dt><dd class="font-semibold {% if status.kitchen_living_mq2.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_mq2 %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_mq2.value.state|default:'No data' }}</dd></div>
-            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Buzzer</dt><dd class="font-semibold {% if status.kitchen_living_buzzer.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_buzzer %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_buzzer.value.state|default:'No data' }}</dd></div>
-            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Living motion</dt><dd class="font-semibold {% if status.kitchen_living_pir.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_pir %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_pir.value.state|default:'No data' }}</dd></div>
-            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Entrance motion</dt><dd class="font-semibold {% if status.entrance_pir.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.entrance_pir %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.entrance_pir.value.state|default:'No data' }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Smoke alert</dt><dd data-live-state="kitchen_living/mq2" class="font-semibold {% if status.kitchen_living_mq2.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_mq2 %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_mq2.value.state|default:'No data' }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Buzzer</dt><dd data-live-state="kitchen_living/buzzer" class="font-semibold {% if status.kitchen_living_buzzer.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_buzzer %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_buzzer.value.state|default:'No data' }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Living motion</dt><dd data-live-state="kitchen_living/pir" class="font-semibold {% if status.kitchen_living_pir.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_pir %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_pir.value.state|default:'No data' }}</dd></div>
+            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Entrance motion</dt><dd data-live-state="entrance/pir" class="font-semibold {% if status.entrance_pir.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.entrance_pir %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.entrance_pir.value.state|default:'No data' }}</dd></div>
           </dl>
         </article>
       </div>
@@ -149,12 +149,11 @@
       <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
         <div class="border-b border-slate-200 pb-4 dark:border-slate-800"><h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Authorized NFC cards</h2><p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Cards currently accepted by the door controller.</p></div>
         <div id="authorized-card-list" class="mt-1 max-h-40 overflow-auto text-sm">
-          {% for card in registered_cards %}<div data-authorized-card="{{ card.tag_id }}" class="flex items-center justify-between gap-3 border-b border-slate-200 py-3 last:border-b-0 dark:border-slate-800"><span class="break-all font-mono">{{ card.tag_id }}</span><form method="post" action="{% url 'set_nfc_authorization' %}">{% csrf_token %}<input type="hidden" name="tag_id" value="{{ card.tag_id }}"><input type="hidden" name="enabled" value="0"><button class="text-xs font-bold text-red-600 hover:text-red-500 dark:text-red-400">Revoke</button></form></div>{% empty %}<p data-authorized-empty class="py-4 text-sm text-slate-400">No cards authorized.</p>{% endfor %}
+          {% for card in registered_cards %}<div data-authorized-card="{{ card.tag_id }}" class="flex items-center justify-between gap-3 border-b border-slate-200 py-3 last:border-b-0 dark:border-slate-800"><button type="button" data-revoke-card="{{ card.tag_id }}" class="break-all font-mono text-left text-slate-900 hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-400">{{ card.tag_id }}</button></div>{% empty %}<p data-authorized-empty class="py-4 text-sm text-slate-400">No cards authorized.</p>{% endfor %}
         </div>
         <div class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800"><h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Authorize a scanned card</h3>
         <form method="post" action="{% url 'add_nfc_log' %}" class="mt-4 grid gap-4">{% csrf_token %}
-          <div><label for="tag-id" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tag ID</label><input id="tag-id" required name="tag_id" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-600 dark:focus:border-blue-500 dark:focus:ring-blue-500/25" aria-describedby="tag-id-help"><p id="tag-id-help" class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Use the ID reported by the NFC reader.</p></div>
-          <div><label for="nfc-note" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Note <span class="font-normal normal-case tracking-normal">(optional)</span></label><input id="nfc-note" name="note" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-600 dark:focus:border-blue-500 dark:focus:ring-blue-500/25"></div>
+          <div><label for="tag-id" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tag ID</label><input id="tag-id" required name="tag_id" readonly class="min-h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" aria-describedby="tag-id-help"><p id="tag-id-help" class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Scan a card to fill this field.</p></div>
           <div><label for="nfc-access" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Access</label><select id="nfc-access" name="granted" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-500 dark:focus:ring-blue-500/25"><option value="1">Granted</option><option value="0">Denied</option></select></div>
           <button class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">Save audit log</button>
           <button formmethod="post" formaction="{% url 'set_nfc_authorization' %}" name="enabled" value="1" class="min-h-11 w-full rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900">Authorize card</button>
@@ -163,6 +162,17 @@
       </article>
     </section>
   </main>
+  <div id="revoke-card-modal" hidden class="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-labelledby="revoke-card-title">
+    <div class="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-2xl">
+      <h2 id="revoke-card-title" class="text-lg font-bold text-slate-100">Revoke NFC card?</h2>
+      <p class="mt-2 text-sm text-slate-400">This card will no longer open the door.</p>
+      <p id="revoke-card-uid" class="mt-3 break-all font-mono text-sm text-slate-100"></p>
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" data-close-revoke-modal class="min-h-10 rounded-lg border border-slate-700 px-4 py-2 text-sm font-bold text-slate-200">Cancel</button>
+        <form id="revoke-card-form" method="post" action="{% url 'set_nfc_authorization' %}">{% csrf_token %}<input type="hidden" name="tag_id"><input type="hidden" name="enabled" value="0"><button class="min-h-10 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white">Revoke</button></form>
+      </div>
+    </div>
+  </div>
   <script>
     (() => {
       const button = document.getElementById('theme-toggle');
@@ -184,6 +194,22 @@
         notificationArea.querySelector('p').textContent = text;
       };
 
+      const revokeModal = document.getElementById('revoke-card-modal');
+      const revokeForm = document.getElementById('revoke-card-form');
+      const openRevokeModal = (tagId) => {
+        revokeForm.querySelector('[name="tag_id"]').value = tagId;
+        document.getElementById('revoke-card-uid').textContent = tagId;
+        revokeModal.hidden = false;
+      };
+      const closeRevokeModal = () => { revokeModal.hidden = true; };
+      document.querySelectorAll('[data-revoke-card]').forEach((button) => {
+        button.addEventListener('click', () => openRevokeModal(button.dataset.revokeCard));
+      });
+      document.querySelector('[data-close-revoke-modal]').addEventListener('click', closeRevokeModal);
+      revokeModal.addEventListener('click', (event) => {
+        if (event.target === revokeModal) closeRevokeModal();
+      });
+
       const updateAuthorizedCard = (tagId, enabled) => {
         if (!tagId) return;
         const list = document.getElementById('authorized-card-list');
@@ -203,15 +229,14 @@
         const label = document.createElement('span');
         label.className = 'break-all font-mono';
         label.textContent = tagId;
-        const form = document.createElement('form');
-        form.method = 'post';
-        form.action = '/nfc/authorize/';
-        form.innerHTML = '<input type="hidden" name="csrfmiddlewaretoken"><input type="hidden" name="tag_id"><input type="hidden" name="enabled" value="0"><button class="text-xs font-bold text-red-600 hover:text-red-500 dark:text-red-400">Revoke</button>';
-        form.querySelector('[name="csrfmiddlewaretoken"]').value = document.querySelector('[name="csrfmiddlewaretoken"]').value;
-        form.querySelector('[name="tag_id"]').value = tagId;
-        row.append(label, form);
+        const revokeButton = document.createElement('button');
+        revokeButton.type = 'button';
+        revokeButton.dataset.revokeCard = tagId;
+        revokeButton.className = 'break-all font-mono text-left text-slate-900 hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-400';
+        revokeButton.textContent = tagId;
+        revokeButton.addEventListener('click', () => openRevokeModal(tagId));
+        row.append(revokeButton);
         list.append(row);
-        form.addEventListener('submit', handleFormSubmit);
       };
 
       const handleFormSubmit = async (event) => {
@@ -272,6 +297,7 @@
             }
             if (form.action.endsWith('/nfc/authorize/')) {
               updateAuthorizedCard(formData.get('tag_id'), formData.get('enabled') === '1');
+              closeRevokeModal();
             }
             showNotification(message || 'Command sent. The ESP will report state back when it updates.', false);
           } catch (error) {
@@ -354,6 +380,8 @@
         const tag = document.createElement('p');
         tag.className = 'break-all font-mono font-medium text-slate-900 dark:text-slate-100';
         tag.textContent = log.tag_id;
+        const tagInput = document.getElementById('tag-id');
+        if (tagInput) tagInput.value = log.tag_id;
         details.appendChild(tag);
         if (log.note) {
           const note = document.createElement('p');
