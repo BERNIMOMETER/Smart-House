@@ -199,13 +199,19 @@
               headers: {'X-Requested-With': 'XMLHttpRequest'},
               credentials: 'same-origin',
             });
-            if (!response.ok) throw new Error('Request failed');
             const responseHtml = await response.text();
-            const responseDocument = new DOMParser().parseFromString(responseHtml, 'text/html');
-            const message = responseDocument.querySelector('[aria-label="System notifications"] p');
-            showNotification(message ? message.textContent : 'Command sent. Waiting for device state...', false);
+            let message = '';
+            try {
+              message = JSON.parse(responseHtml).message || '';
+            } catch (error) {
+              const responseDocument = new DOMParser().parseFromString(responseHtml, 'text/html');
+              const messageElement = responseDocument.querySelector('[aria-label="System notifications"] p');
+              message = messageElement ? messageElement.textContent : '';
+            }
+            if (!response.ok) throw new Error(message || 'Command could not be sent. Check the connection and try again.');
+            showNotification(message || 'Command sent. Waiting for device state...', false);
           } catch (error) {
-            showNotification('Command could not be sent. Check the connection and try again.', true);
+            showNotification(error.message || 'Command could not be sent. Check the connection and try again.', true);
           } finally {
             buttons.forEach((button) => { button.disabled = false; });
           }

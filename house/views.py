@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
@@ -13,6 +13,13 @@ CONTROLLABLE = {
     ("entrance", "outdoor_led"),
     ("entrance", "door"),
 }
+
+
+def _command_response(request, message, error=False):
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse({"message": message, "error": error}, status=502 if error else 200)
+    (messages.error if error else messages.success)(request, message)
+    return redirect("dashboard")
 
 
 def _device_map():
@@ -39,13 +46,11 @@ def set_security_mode(request):
     try:
         publish_security_mode(enabled)
     except MQTTCommandError:
-        messages.error(request, "Command was not sent. Check the MQTT connection and try again.")
-        return redirect("dashboard")
+        return _command_response(request, "Command was not sent. Check the MQTT connection and try again.", error=True)
     # This is desired global configuration; devices subsequently report their observed state.
     system.security_mode = enabled
     system.save(update_fields=["security_mode", "updated_at"])
-    messages.success(request, f"Security mode command sent: {'ON' if enabled else 'OFF'}.")
-    return redirect("dashboard")
+    return _command_response(request, f"Security mode command sent: {'ON' if enabled else 'OFF'}.")
 
 
 @require_POST
@@ -56,14 +61,12 @@ def control_device(request):
     try:
         publish_command(zone, device, command)
     except MQTTCommandError:
-        messages.error(request, "Command was not sent. Check the MQTT connection and try again.")
-        return redirect("dashboard")
+        return _command_response(request, "Command was not sent. Check the MQTT connection and try again.", error=True)
     # AUTO releases a manual override. ON/OFF set it. State itself remains device-reported.
     state, _ = DeviceState.objects.get_or_create(zone=zone, device=device)
     state.manual_override = command in {"ON", "OFF"} and device != "door"
     state.save(update_fields=["manual_override", "updated_at"])
-    messages.success(request, f"{zone}/{device}: {command} command sent.")
-    return redirect("dashboard")
+    return _command_response(request, f"{zone}/{device}: {command} command sent.")
 
 
 @require_POST

@@ -259,8 +259,12 @@ void onMessage(char *topic, byte *payload, unsigned int length) {
   String authorizationPrefix = String(MQTT_TOPIC_PREFIX) + "/entrance/nfc/authorized/";
   if (topicName.startsWith(authorizationPrefix) && topicName.endsWith("/set")) {
     String uid = topicName.substring(authorizationPrefix.length(), topicName.length() - 4);
-    setAuthorisedUid(uid, value == "ON");
+    bool authorised = value == "ON";
+    setAuthorisedUid(uid, authorised);
     Serial.printf("NFC card %s: %s\n", uid.c_str(), value == "ON" ? "AUTHORIZED" : "REVOKED");
+    char state[180];
+    snprintf(state, sizeof(state), "{\"tag_id\":\"%s\",\"state\":\"%s\"}", uid.c_str(), authorised ? "ON" : "OFF");
+    publishState("entrance", "nfc_authorized", state);
     return;
   }
 
