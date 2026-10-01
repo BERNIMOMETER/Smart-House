@@ -248,6 +248,17 @@
               document.querySelectorAll(`[data-live-state="${zone}/${device}"]`).forEach((element) => {
                 element.textContent = state;
               });
+              if (command === 'ON' || command === 'OFF') {
+                document.querySelectorAll(`[data-control-input="${zone}/${device}"]`).forEach((element) => {
+                  element.checked = command === 'ON';
+                });
+                document.querySelectorAll(`[data-control-knob="${zone}/${device}"]`).forEach((element) => {
+                  element.classList.toggle('translate-x-5', command === 'ON');
+                });
+                document.querySelectorAll(`[data-control-value="${zone}/${device}"]`).forEach((element) => {
+                  element.textContent = command;
+                });
+              }
             }
             if (form.action.endsWith('/security/')) {
               const armed = formData.get('enabled') === '1';
@@ -273,6 +284,13 @@
       document.querySelectorAll('form[method="post"]').forEach((form) => {
         form.addEventListener('submit', handleFormSubmit);
       });
+      document.querySelectorAll('[data-control-input]').forEach((input) => {
+        input.addEventListener('change', () => {
+          const form = input.closest('form');
+          form.querySelector('input[name="command"]').value = input.checked ? 'ON' : 'OFF';
+          form.requestSubmit();
+        });
+      });
     })();
 
     (() => {
@@ -293,6 +311,17 @@
         document.querySelectorAll(`[data-live-state="${key}"]`).forEach((element) => {
           element.textContent = state ?? 'No data';
         });
+        if (state === 'ON' || state === 'OFF') {
+          document.querySelectorAll(`[data-control-input="${key}"]`).forEach((element) => {
+            element.checked = state === 'ON';
+          });
+          document.querySelectorAll(`[data-control-knob="${key}"]`).forEach((element) => {
+            element.classList.toggle('translate-x-5', state === 'ON');
+          });
+          document.querySelectorAll(`[data-control-value="${key}"]`).forEach((element) => {
+            element.textContent = state;
+          });
+        }
         if (typeof value === 'object' && value !== null) {
           Object.entries(value).forEach(([field, fieldValue]) => {
             document.querySelectorAll(`[data-live-field="${key}/${field}"]`).forEach((element) => {

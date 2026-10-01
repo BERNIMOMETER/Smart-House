@@ -15,14 +15,14 @@
       <form method="post" action="{% url 'control_device' %}">{% csrf_token %}
         <input type="hidden" name="zone" value="{{ zone }}">
         <input type="hidden" name="device" value="{{ device }}">
-        <input type="hidden" name="command" value="ON">
-        <button aria-label="Turn {{ title }} on" aria-pressed="{% if state == 'ON' %}true{% else %}false{% endif %}" class="min-h-11 min-w-11 rounded-lg border px-4 py-2 font-mono text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900 {% if state == 'ON' %}border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500{% else %}border-slate-200 bg-white text-slate-600 hover:border-blue-600 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:bg-slate-800{% endif %}">ON</button>
-      </form>
-      <form method="post" action="{% url 'control_device' %}">{% csrf_token %}
-        <input type="hidden" name="zone" value="{{ zone }}">
-        <input type="hidden" name="device" value="{{ device }}">
-        <input type="hidden" name="command" value="OFF">
-        <button aria-label="Turn {{ title }} off" aria-pressed="{% if state == 'OFF' %}true{% else %}false{% endif %}" class="min-h-11 min-w-11 rounded-lg border px-4 py-2 font-mono text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900 {% if state == 'OFF' %}border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500{% else %}border-slate-200 bg-white text-slate-600 hover:border-blue-600 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:bg-slate-800{% endif %}">OFF</button>
+          <input type="hidden" name="command" value="{% if state == 'ON' %}ON{% else %}OFF{% endif %}">
+          <div class="flex items-center gap-3">
+            <input id="toggle-{{ zone }}-{{ device }}" data-control-input="{{ zone }}/{{ device }}" type="checkbox" class="peer sr-only" {% if state == 'ON' %}checked{% endif %}>
+            <label for="toggle-{{ zone }}-{{ device }}" class="relative h-7 w-12 cursor-pointer rounded-full bg-slate-300 transition peer-checked:bg-blue-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-600 peer-focus:ring-offset-2 dark:bg-slate-700 dark:peer-checked:bg-blue-500 dark:peer-focus:ring-blue-500 dark:peer-focus:ring-offset-slate-950" aria-label="Toggle {{ title }}">
+              <span data-control-knob="{{ zone }}/{{ device }}" class="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform {% if state == 'ON' %}translate-x-5{% endif %}"></span>
+            </label>
+            <span data-control-value="{{ zone }}/{{ device }}" class="font-mono text-xs font-bold">{% if state == 'ON' %}ON{% else %}OFF{% endif %}</span>
+          </div>
       </form>
       {% if auto %}
         <form method="post" action="{% url 'control_device' %}">{% csrf_token %}
