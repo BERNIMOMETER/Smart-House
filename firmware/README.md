@@ -25,11 +25,8 @@ Do not upload the three old sketches for this installation. They are retained as
 | Bedroom fan | 5 |
 | Bedroom LED | 6 |
 | MQ2 analog output | 1 |
-| Kitchen/living exhaust fan | 7 |
-| Living-room PIR | 8 |
 | Living-room LED | 9 |
 | Shared buzzer | 10 |
-| Entrance LDR analog output | 2 |
 | Outdoor LED | 11 |
 | Entrance PIR | 12 |
 | Door servo signal | 13 |
@@ -44,9 +41,9 @@ The pin constants are at the top of the sketch. Change them to match the physica
 ## Runtime behavior
 
 - The bedroom fan follows DHT11 temperature at 30 C or above until the website sends `ON` or `OFF`; `AUTO` releases that override.
-- MQ2 smoke turns on the exhaust fan and shared buzzer. Smoke remains an active alarm independently of Security Mode.
-- Both PIR sensors latch their security alarms while Security Mode is on. Turning Security Mode off clears both motion alarms and the buzzer they caused.
-- The LDR controls the outdoor light in AUTO mode. Website `ON`/`OFF` commands override it; `AUTO` releases the override.
+- MQ2 smoke turns on the shared buzzer. Smoke remains an active alarm independently of Security Mode.
+- The entrance PIR latches its security alarm while Security Mode is on. Turning Security Mode off clears the motion alarm and the buzzer it caused.
+- The outdoor light is controlled by website `ON`/`OFF` commands only.
 - The door opens for four seconds from a valid NFC tag or the remote `OPEN` command.
 - NFC reads publish an event and are recorded by the Django MQTT bridge.
 

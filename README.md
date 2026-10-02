@@ -4,8 +4,8 @@ This project runs a Django dashboard and one ESP32-S3 controller for the kitchen
 
 ## Behaviour locked into this project
 
-- One kitchen/living buzzer sounds for MQ2 smoke or either armed PIR alarm. Disarming Security Mode clears only PIR alarms; it cannot silence a smoke alarm.
-- The bedroom fan runs automatically at 30 C or above unless the dashboard sends `ON` or `OFF`; `AUTO` releases the override. The outdoor light uses the same override pattern.
+- One house-wide buzzer sounds for MQ2 smoke or the entrance PIR alarm. Disarming Security Mode clears only the PIR alarm; it cannot silence a smoke alarm.
+- The bedroom fan runs automatically at 30 C or above unless the dashboard sends `ON` or `OFF`; `AUTO` releases the override. The outdoor light is controlled manually from the dashboard.
 - A valid NFC tag or dashboard door command opens the servo for four seconds. NFC reads are retained as audit records.
 - The MQTT topic contract is unchanged. Do not rename topics when configuring HiveMQ Cloud.
 

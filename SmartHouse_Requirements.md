@@ -11,7 +11,7 @@ Fan - it will suck out smoke (REMOVE FROM PROTOTYPE)
 
 Living Room same room to the Kitchen:
 	Sensor:
-		PIR - Motion Sensor 
+		None
 	Actuator:
 		LED (RELAY CH-3)
 		Buzzer (General Purpose)
@@ -20,12 +20,11 @@ Bedroom:
 	Sensor:
 		Dht11
 	Actuator:	
-		Fan for high temperature (RELAY CH-1) (NO PWM ON AND OFF ONLY)
-		LED	(RELAY CH-4)
+		Fan for high temperature (RELAY CH-4) (NO PWM ON AND OFF ONLY)
+		LED	(RELAY CH-1)
 
 Entrance (OUTDOOR): 
 	Sensor:
-		LDR sensor
 		PIR Sensor (Alarm system)
 		NFC Reader (For door entrance)
 	Actuator:
@@ -42,9 +41,9 @@ TOTAL SENSOR & ACTUATOR USED:
 
 Sensors:
 1. MQ2 smoke sensor - 1
-2. PIR motion sensors - 1 (entrance only)
+2. PIR motion sensor - 1 (entrance only)
 3. DHT11 temperature sensor - 1
-5. NFC reader - 1
+4. NFC reader - 1
 
 Total sensors: 4
 
@@ -77,7 +76,7 @@ Remote:
 	Open Door
 Audit NFC Log(Write, Read)
 Security Alarm:
-	Trigger: PIR Sensors
+	Trigger: Entrance PIR sensor
 	Action: Buzzer
 	Remote: Status(Read)
 
@@ -96,11 +95,10 @@ status:DHT11(Read)
 
 Light Control:
 	Outdoor:
-	Trigger:
-IOT website
-LDR Sensor
+			Trigger:
+	IOT website
 Action: Set Light
-	Remote: IOT Website Status(Read, Set).
+			Remote: IOT Website Status(Read, Set).
 Indoor(Living Room):
 	Trigger: IOT website
 	Action: Set Light
