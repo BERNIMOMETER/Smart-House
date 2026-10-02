@@ -1,6 +1,6 @@
 #pragma once
 
-// Copy this file to firmware/config.h and fill in local network/broker settings.
+// Copy this file to firmware/smarthouse/config.h and fill in local network/broker settings.
 // config.h is intentionally excluded from git.
 #define WIFI_SSID "YOUR_WIFI_NAME"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
@@ -10,6 +10,8 @@
 #define MQTT_PASSWORD "YOUR_HIVEMQ_PASSWORD"
 #define MQTT_CLIENT_ID "smarthouse-esp32-s3"
 #define MQTT_TOPIC_PREFIX "smarthouse"
+// Most 4-channel relay boards energize on LOW. Change to HIGH if yours does not.
+#define RELAY_ACTIVE_LEVEL LOW
 
 // Production requires TLS and certificate validation. Keep this set to 1 for
 // HiveMQ Cloud. Set it to 0 only for an isolated local-development broker.

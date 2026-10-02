@@ -66,25 +66,18 @@ TEMPLATES = [{
 WSGI_APPLICATION = "smarthouse.wsgi.application"
 ASGI_APPLICATION = "smarthouse.asgi.application"
 REDIS_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
-if DEBUG:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels.layers.InMemoryChannelLayer",
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [{
+                "address": REDIS_URL,
+                "socket_connect_timeout": 2,
+                "socket_timeout": 2,
+            }],
         },
-    }
-else:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {
-                "hosts": [{
-                    "address": REDIS_URL,
-                    "socket_connect_timeout": 5,
-                    "socket_timeout": 30,
-                }],
-            },
-        },
-    }
+    },
+}
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",

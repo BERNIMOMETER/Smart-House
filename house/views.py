@@ -6,12 +6,12 @@ from django.views.decorators.http import require_POST
 from .models import DeviceState, NFCAuditLog, NFCRegisteredCard, SystemState
 from .mqtt import MQTTCommandError, publish_command, publish_nfc_authorization, publish_security_mode
 
-CONTROLLABLE = {
-    ("kitchen_living", "living_led"),
-    ("bedroom", "fan"),
-    ("bedroom", "led"),
-    ("entrance", "outdoor_led"),
-    ("entrance", "door"),
+COMMANDS = {
+    ("bedroom", "fan"): {"ON", "OFF", "AUTO"},
+    ("bedroom", "led"): {"ON", "OFF"},
+    ("kitchen_living", "living_led"): {"ON", "OFF"},
+    ("entrance", "outdoor_led"): {"ON", "OFF"},
+    ("entrance", "door"): {"OPEN"},
 }
 
 
@@ -42,30 +42,24 @@ def dashboard(request):
 @require_POST
 def set_security_mode(request):
     enabled = request.POST.get("enabled") == "1"
-    system, _ = SystemState.objects.get_or_create(pk=1)
     try:
         publish_security_mode(enabled)
     except MQTTCommandError:
         return _command_response(request, "Command was not sent. Check the MQTT connection and try again.", error=True)
-    # This is desired global configuration; devices subsequently report their observed state.
-    system.security_mode = enabled
-    system.save(update_fields=["security_mode", "updated_at"])
+    # The bridge stores the mode only after the ESP32 reports its observed state.
     return _command_response(request, f"Security mode command sent: {'ON' if enabled else 'OFF'}.")
 
 
 @require_POST
 def control_device(request):
     zone, device, command = request.POST.get("zone"), request.POST.get("device"), request.POST.get("command")
-    if (zone, device) not in CONTROLLABLE or command not in {"ON", "OFF", "AUTO", "OPEN"}:
+    if command not in COMMANDS.get((zone, device), set()):
         return HttpResponseBadRequest("Invalid device command")
     try:
         publish_command(zone, device, command)
     except MQTTCommandError:
         return _command_response(request, "Command was not sent. Check the MQTT connection and try again.", error=True)
-    # AUTO releases a manual override. ON/OFF set it. State itself remains device-reported.
-    state, _ = DeviceState.objects.get_or_create(zone=zone, device=device)
-    state.manual_override = command in {"ON", "OFF"} and device != "door"
-    state.save(update_fields=["manual_override", "updated_at"])
+    # State and fan mode are persisted only when the ESP32 reports them.
     return _command_response(request, f"{zone}/{device}: {command} command sent.")
 
 

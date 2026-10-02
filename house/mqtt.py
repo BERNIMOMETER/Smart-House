@@ -1,6 +1,7 @@
 """MQTT protocol adapter. Only this module knows topic/payload details."""
 import json
 import logging
+import threading
 import uuid
 
 import paho.mqtt.client as mqtt
@@ -11,6 +12,15 @@ from django.conf import settings
 from .models import DeviceState, NFCAuditLog, SystemState
 
 LOG = logging.getLogger(__name__)
+_PUBLISH_SLOTS = threading.BoundedSemaphore(2)
+SUPPORTED_STATES = {
+    ("bedroom", "dht11"), ("bedroom", "fan"), ("bedroom", "led"),
+    ("kitchen_living", "mq2"), ("kitchen_living", "buzzer"),
+    ("kitchen_living", "living_led"), ("entrance", "pir"),
+    ("entrance", "alarm"), ("entrance", "nfc"),
+    ("entrance", "nfc_authorized"), ("entrance", "door"),
+    ("entrance", "outdoor_led"),
+}
 
 
 class MQTTCommandError(RuntimeError):
@@ -55,7 +65,10 @@ def _parse(payload):
 
 def save_state(zone, device, payload):
     value = _parse(payload) if isinstance(payload, bytes) else payload
-    DeviceState.objects.update_or_create(zone=zone, device=device, defaults={"value": value})
+    defaults = {"value": value}
+    if (zone, device) == ("bedroom", "fan") and isinstance(value, dict) and value.get("mode") in {"AUTO", "MANUAL"}:
+        defaults["manual_override"] = value["mode"] == "MANUAL"
+    DeviceState.objects.update_or_create(zone=zone, device=device, defaults=defaults)
 
 
 def broadcast_state(zone, device, value):
@@ -88,6 +101,8 @@ class MQTTBridge:
             LOG.error("MQTT connection failed: %s", reason_code)
             return
         client.subscribe(f"{settings.MQTT_TOPIC_PREFIX}/+/+/state")
+        # A previous version retained OPEN; remove that stale event at the broker.
+        client.publish(topic("entrance", "door", "set"), "", qos=1, retain=True)
         LOG.info("Connected to MQTT broker and subscribed to state topics")
 
     def on_connect_fail(self, client, userdata):
@@ -110,6 +125,8 @@ class MQTTBridge:
             if not parts or len(parts) != 3 or parts[2] != "state":
                 return
             zone, device = parts[0], parts[1]
+            if (zone, device) not in SUPPORTED_STATES:
+                return
             value = _parse(message.payload)
             save_state(zone, device, value)
             broadcast_state(zone, device, value)
@@ -135,24 +152,34 @@ class MQTTBridge:
         self.client.loop_forever(retry_first_connection=True)
 
 
-def publish_command(zone, device, command):
-    """Publish one retained command so reconnecting ESP32 nodes receive it."""
+def _publish_command_sync(zone, device, command):
+    """Do the broker I/O away from the HTTP request thread."""
     command_topic = topic(zone, device, "set")
     LOG.info("Publishing MQTT command topic=%s command=%s", command_topic, command)
     client = _configure_client(mqtt.Client(
         mqtt.CallbackAPIVersion.VERSION2,
         client_id=_client_id("command", unique=True),
     ))
-    connected = False
+    connected = threading.Event()
+    connection_result = {"ok": False}
+
+    def on_connect(_client, _userdata, _flags, reason_code, _properties):
+        connection_result["ok"] = reason_code == 0
+        connected.set()
+
+    client.on_connect = on_connect
+    client.reconnect_delay_set(min_delay=1, max_delay=1)
     loop_started = False
     try:
-        client.connect(settings.MQTT_HOST, settings.MQTT_PORT, keepalive=20)
-        connected = True
+        client.connect_async(settings.MQTT_HOST, settings.MQTT_PORT, keepalive=20)
         client.loop_start()
         loop_started = True
+        if not connected.wait(timeout=5) or not connection_result["ok"]:
+            raise MQTTCommandError("Timed out or failed connecting to the MQTT broker.")
         # QoS 1 makes the broker acknowledge the command before this short-lived
         # publisher disconnects; QoS 0 can be lost during that disconnect.
-        result = client.publish(command_topic, command, qos=1, retain=True)
+        # OPEN is an event: replaying it after an ESP32 reconnect could reopen the door.
+        result = client.publish(command_topic, command, qos=1, retain=not (zone == "entrance" and device == "door"))
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
             raise MQTTCommandError("MQTT client did not accept the command for publishing.")
         result.wait_for_publish(timeout=5)
@@ -168,9 +195,35 @@ def publish_command(zone, device, command):
         raise MQTTCommandError("Could not publish the MQTT command.") from error
     finally:
         if loop_started:
-            client.loop_stop()
-        if connected:
             client.disconnect()
+            client.loop_stop()
+
+
+def publish_command(zone, device, command):
+    """Bound the whole publish attempt, including DNS and network cleanup."""
+    if not _PUBLISH_SLOTS.acquire(blocking=False):
+        raise MQTTCommandError("MQTT publisher is busy; try again shortly.")
+    finished = threading.Event()
+    outcome = {}
+
+    def run():
+        try:
+            _publish_command_sync(zone, device, command)
+        except Exception as error:
+            outcome["error"] = error
+        finally:
+            _PUBLISH_SLOTS.release()
+            finished.set()
+
+    try:
+        threading.Thread(target=run, name="mqtt-command", daemon=True).start()
+    except RuntimeError as error:
+        _PUBLISH_SLOTS.release()
+        raise MQTTCommandError("Could not start the MQTT publisher.") from error
+    if not finished.wait(timeout=11):
+        raise MQTTCommandError("Timed out publishing the MQTT command.")
+    if "error" in outcome:
+        raise outcome["error"]
 
 
 def publish_security_mode(enabled):

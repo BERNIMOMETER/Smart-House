@@ -61,12 +61,10 @@
           </div>
           <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Smoke</dt><dd data-live-state="kitchen_living/mq2" class="font-semibold {% if status.kitchen_living_mq2.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_mq2 %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_mq2.value.state|default:'No data' }}</dd></div>
-            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Exhaust fan</dt><dd class="font-semibold {% if status.kitchen_living_fan %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_fan.value.state|default:'No data' }}</dd></div>
-            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Buzzer</dt><dd class="font-semibold {% if status.kitchen_living_buzzer.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_buzzer %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_buzzer.value.state|default:'No data' }}</dd></div>
-            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Living motion</dt><dd class="font-semibold {% if status.kitchen_living_pir.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_pir %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_pir.value.state|default:'No data' }}</dd></div>
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Buzzer</dt><dd data-live-state="kitchen_living/buzzer" class="font-semibold {% if status.kitchen_living_buzzer.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_buzzer %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_buzzer.value.state|default:'No data' }}</dd></div>
           </dl>
           <div class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800">
-            {% include 'house/control.html' with zone='kitchen_living' device='living_led' title='Living light' state=status.kitchen_living_living_led.value.state auto=False manual_override=status.kitchen_living_living_led.manual_override %}
+            {% include 'house/control.html' with zone='kitchen_living' device='living_led' title='Living light (relay CH2)' state=status.kitchen_living_living_led.value.state auto=False manual_override=status.kitchen_living_living_led.manual_override %}
           </div>
         </article>
 
@@ -80,8 +78,8 @@
             <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950/50"><p class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Humidity</p><p class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100"><span data-live-field="bedroom/dht11/humidity">{{ status.bedroom_dht11.value.humidity|default:'--' }}</span><span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">% RH</span></p></div>
           </div>
           <div class="mt-4 space-y-4">
-            {% include 'house/control.html' with zone='bedroom' device='fan' title='Fan (auto at ≥ 30°C)' state=status.bedroom_fan.value.state auto=True manual_override=status.bedroom_fan.manual_override %}
-            {% include 'house/control.html' with zone='bedroom' device='led' title='Bedroom light' state=status.bedroom_led.value.state auto=False manual_override=status.bedroom_led.manual_override %}
+            {% include 'house/control.html' with zone='bedroom' device='fan' title='Fan (relay CH4, auto at ≥ 30°C)' state=status.bedroom_fan.value.state auto=True manual_override=status.bedroom_fan.manual_override %}
+            {% include 'house/control.html' with zone='bedroom' device='led' title='Bedroom light (relay CH1)' state=status.bedroom_led.value.state auto=False manual_override=status.bedroom_led.manual_override %}
           </div>
         </article>
 
@@ -91,11 +89,10 @@
             <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-300">Zone 03</span>
           </div>
           <dl class="mt-4 grid gap-3 border-b border-slate-200 pb-4 text-sm dark:border-slate-800">
-            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Ambient light</dt><dd data-live-field="entrance/ldr/raw" class="font-semibold {% if status.entrance_ldr %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.entrance_ldr.value.raw|default:'No data' }}</dd></div>
-            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Entrance motion</dt><dd class="font-semibold {% if status.entrance_pir.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.entrance_pir %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.entrance_pir.value.state|default:'No data' }}</dd></div>
+            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Entrance motion</dt><dd data-live-state="entrance/pir" class="font-semibold {% if status.entrance_pir.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.entrance_pir %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.entrance_pir.value.state|default:'No data' }}</dd></div>
           </dl>
           <div class="mt-4 space-y-4">
-            {% include 'house/control.html' with zone='entrance' device='outdoor_led' title='Outdoor light' state=status.entrance_outdoor_led.value.state auto=True manual_override=status.entrance_outdoor_led.manual_override %}
+            {% include 'house/control.html' with zone='entrance' device='outdoor_led' title='Outdoor light (relay CH3)' state=status.entrance_outdoor_led.value.state auto=False manual_override=status.entrance_outdoor_led.manual_override %}
             {% include 'house/control.html' with zone='entrance' device='door' title='Door lock' state=status.entrance_door.value.state door=True %}
           </div>
         </article>
@@ -126,7 +123,6 @@
           <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Smoke alert</dt><dd data-live-state="kitchen_living/mq2" class="font-semibold {% if status.kitchen_living_mq2.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_mq2 %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_mq2.value.state|default:'No data' }}</dd></div>
             <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Buzzer</dt><dd data-live-state="kitchen_living/buzzer" class="font-semibold {% if status.kitchen_living_buzzer.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_buzzer %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_buzzer.value.state|default:'No data' }}</dd></div>
-            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Living motion</dt><dd data-live-state="kitchen_living/pir" class="font-semibold {% if status.kitchen_living_pir.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_pir %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_pir.value.state|default:'No data' }}</dd></div>
             <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Entrance motion</dt><dd data-live-state="entrance/pir" class="font-semibold {% if status.entrance_pir.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.entrance_pir %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.entrance_pir.value.state|default:'No data' }}</dd></div>
           </dl>
         </article>
@@ -155,6 +151,7 @@
         <form method="post" action="{% url 'add_nfc_log' %}" class="mt-4 grid gap-4">{% csrf_token %}
           <div><label for="tag-id" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tag ID</label><input id="tag-id" required name="tag_id" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-600 dark:focus:border-blue-500 dark:focus:ring-blue-500/25" aria-describedby="tag-id-help"><p id="tag-id-help" class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Scan a card or enter its UID.</p></div>
           <div><label for="nfc-access" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Access</label><select id="nfc-access" name="granted" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-500 dark:focus:ring-blue-500/25"><option value="1">Granted</option><option value="0">Denied</option></select></div>
+          <div><label for="nfc-note" class="mb-2 block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Note</label><input id="nfc-note" name="note" maxlength="255" class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"></div>
           <button class="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">Save audit log</button>
           <button formmethod="post" formaction="{% url 'set_nfc_authorization' %}" name="enabled" value="1" class="min-h-11 w-full rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-blue-500 dark:focus:ring-offset-slate-900">Authorize card</button>
         </form>
@@ -266,10 +263,17 @@
       const handleFormSubmit = async (event) => {
           const form = event.currentTarget;
           event.preventDefault();
+          if (form.dataset.pending === '1') return;
+          form.dataset.pending = '1';
           const submitter = event.submitter;
           const formData = new FormData(form);
           if (submitter?.name) formData.set(submitter.name, submitter.value);
           const buttons = form.querySelectorAll('button');
+          const changedInput = form.querySelector('[data-control-input], [data-auto-input]');
+          const previousChecked = changedInput ? !changedInput.checked : null;
+          if (changedInput) changedInput.disabled = true;
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 12000);
           buttons.forEach((button) => { button.disabled = true; });
           try {
             const target = submitter?.hasAttribute('formaction') ? submitter.formAction : form.action;
@@ -278,6 +282,7 @@
               body: formData,
               headers: {'X-Requested-With': 'XMLHttpRequest'},
               credentials: 'same-origin',
+              signal: controller.signal,
             });
             const responseHtml = await response.text();
             let message = '';
@@ -292,43 +297,9 @@
             const zone = formData.get('zone');
             const device = formData.get('device');
             const command = formData.get('command');
-            if (zone && device && command) {
-              if (command !== 'AUTO') {
-                const state = command === 'OPEN' ? 'OPEN' : command;
-                document.querySelectorAll(`[data-live-state="${zone}/${device}"]`).forEach((element) => {
-                  element.textContent = state;
-                });
-              }
-              if (command === 'ON' || command === 'OFF') {
-                document.querySelectorAll(`[data-control-input="${zone}/${device}"]`).forEach((element) => {
-                  element.checked = command === 'ON';
-                });
-                document.querySelectorAll(`[data-control-knob="${zone}/${device}"]`).forEach((element) => {
-                  element.classList.toggle('translate-x-5', command === 'ON');
-                });
-                document.querySelectorAll(`[data-control-value="${zone}/${device}"]`).forEach((element) => {
-                  element.textContent = command;
-                });
-              }
-              if (form.matches('[data-auto-form]')) {
-                document.querySelectorAll(`[data-auto-input="${zone}/${device}"]`).forEach((element) => {
-                  element.checked = command === 'AUTO';
-                });
-                document.querySelectorAll(`[data-auto-knob="${zone}/${device}"]`).forEach((element) => {
-                  element.classList.toggle('translate-x-5', command === 'AUTO');
-                });
-              }
-            }
-            if (form.action.endsWith('/security/')) {
-              const armed = formData.get('enabled') === '1';
-              document.querySelectorAll('[data-security-label]').forEach((element) => {
-                element.textContent = armed ? 'Disarm security' : 'Arm security';
-              });
-              document.querySelectorAll('[data-live-state="system/security_mode"]').forEach((element) => {
-                element.textContent = armed ? 'ARMED' : 'DISARMED';
-              });
-              form.querySelector('input[name="enabled"]').value = armed ? '0' : '1';
-            }
+            // A broker acknowledgement is not a device report. Keep the last
+            // reported position until the ESP32 confirms the new state/mode.
+            if (changedInput) changedInput.checked = changedInput.dataset.reported ? changedInput.dataset.reported === 'ON' : previousChecked;
             if (target.endsWith('/nfc/authorize/')) {
               updateAuthorizedCard(formData.get('tag_id'), formData.get('enabled') === '1');
               if (formData.get('enabled') === '0') closeRevokeModal();
@@ -342,14 +313,18 @@
             };
             const commandKey = zone && device ? `${zone}/${device}` : '';
             const friendlyMessage = form.action.endsWith('/security/')
-              ? `Security ${formData.get('enabled') === '1' ? 'armed' : 'disarmed'}.`
+              ? `Security ${formData.get('enabled') === '1' ? 'armed' : 'disarmed'} command sent.`
               : commandKey && command
                 ? `${deviceNames[commandKey] || commandKey} ${command === 'AUTO' ? 'set to automatic mode' : command === 'OPEN' ? 'opening' : command === 'ON' ? 'turned on' : 'turned off'}.`
                 : message || 'Command sent successfully.';
             showNotification(friendlyMessage, false);
           } catch (error) {
-            showNotification(error.message || 'Command could not be sent. Check the connection and try again.', true);
+            if (changedInput) changedInput.checked = changedInput.dataset.reported ? changedInput.dataset.reported === 'ON' : previousChecked;
+            showNotification(error.name === 'AbortError' ? 'Request timed out. Check the MQTT connection and try again.' : error.message || 'Command could not be sent. Check the connection and try again.', true);
           } finally {
+            clearTimeout(timeout);
+            delete form.dataset.pending;
+            if (changedInput) changedInput.disabled = false;
             buttons.forEach((button) => { button.disabled = false; });
           }
       };
@@ -394,12 +369,23 @@
         if (state === 'ON' || state === 'OFF') {
           document.querySelectorAll(`[data-control-input="${key}"]`).forEach((element) => {
             element.checked = state === 'ON';
+            element.dataset.reported = state;
           });
           document.querySelectorAll(`[data-control-knob="${key}"]`).forEach((element) => {
             element.classList.toggle('translate-x-5', state === 'ON');
           });
           document.querySelectorAll(`[data-control-value="${key}"]`).forEach((element) => {
             element.textContent = state;
+          });
+        }
+        if (key === 'bedroom/fan' && typeof value === 'object' && value !== null && value.mode) {
+          const automatic = value.mode === 'AUTO';
+          document.querySelectorAll('[data-auto-input="bedroom/fan"]').forEach((element) => {
+            element.checked = automatic;
+            element.dataset.reported = automatic ? 'ON' : 'OFF';
+          });
+          document.querySelectorAll('[data-auto-knob="bedroom/fan"]').forEach((element) => {
+            element.classList.toggle('translate-x-5', automatic);
           });
         }
         if (typeof value === 'object' && value !== null) {

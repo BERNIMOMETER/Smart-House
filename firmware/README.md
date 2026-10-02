@@ -4,7 +4,7 @@
 
 ## Arduino setup
 
-1. Open `smarthouse/smarthouse.ino` and fill in the Wi-Fi, HiveMQ Cloud MQTT settings, and `MQTT_ROOT_CA` near the top of the sketch. Keep `MQTT_TLS` set to `1`, use the cluster hostname and port `8883`, and paste the public PEM root CA that validates the cluster into `MQTT_ROOT_CA`. The ESP32 synchronizes its clock through `NTP_SERVER` before validating the certificate, so the Wi-Fi network must allow outbound NTP. Never use `setInsecure()`.
+1. Copy `config.example.h` to the ignored `smarthouse/config.h` in the `firmware` directory. Fill in Wi-Fi, HiveMQ Cloud MQTT settings, and `MQTT_ROOT_CA` there. Keep `MQTT_TLS` set to `1`, use the cluster hostname and port `8883`, and paste the public PEM root CA that validates the cluster into `MQTT_ROOT_CA`. The ESP32 synchronizes its clock through `NTP_SERVER` before validating the certificate, so the Wi-Fi network must allow outbound NTP. Never use `setInsecure()`.
 2. Install these libraries through the Arduino Library Manager:
    - PubSubClient
    - DHT sensor library
@@ -15,19 +15,19 @@
 5. Upload the sketch. NFC authorization is managed from the website: scan a card, open the dashboard, and select **Authorize card** for its UID. The decision is sent to the ESP32 over a retained MQTT command and survives reconnects.
 6. Use **Revoke** in the dashboard to remove a card from the controller.
 
-Do not upload the three old sketches for this installation. They are retained as references for the original room-specific wiring.
+Upload only the combined sketch for this installation.
 
 ## Default pin map
 
 | Device | GPIO |
 | --- | ---: |
 | Bedroom DHT11 data | 4 |
-| Bedroom fan | 5 |
-| Bedroom LED | 6 |
+| Relay CH4: bedroom fan (on/off only) | 5 |
+| Relay CH1: bedroom LED | 6 |
 | MQ2 analog output | 1 |
-| Living-room LED | 9 |
+| Relay CH2: kitchen/living LED | 9 |
 | Shared buzzer | 10 |
-| Outdoor LED | 11 |
+| Relay CH3: outdoor LED | 11 |
 | Entrance PIR | 12 |
 | Door servo signal | 13 |
 | MFRC522 SDA/SS | 14 |
@@ -36,7 +36,7 @@ Do not upload the three old sketches for this installation. They are retained as
 | MFRC522 MOSI | 17 |
 | MFRC522 SCK | 18 |
 
-The pin constants are at the top of the sketch. Change them to match the physical wiring before uploading. Power the MQ2, servo, and buzzer from suitable supplies; share ground with the ESP32-S3 and do not feed a 5 V signal into an ESP32 input.
+The relay pin constants are at the top of the sketch. Most relay boards are active LOW; `RELAY_ACTIVE_LEVEL` in `smarthouse/config.h` selects the installed board's polarity. Change pins to match physical wiring before uploading. Power the MQ2, servo, and buzzer from suitable supplies; share ground with the ESP32-S3 and do not feed a 5 V signal into an ESP32 input.
 
 ## Runtime behavior
 
@@ -54,10 +54,10 @@ Commands are received on the existing `.../set` topics:
 ```text
 smarthouse/system/security_mode/set       ON | OFF
 smarthouse/bedroom/fan/set                ON | OFF | AUTO
-smarthouse/bedroom/led/set                ON | OFF | AUTO
+smarthouse/bedroom/led/set                ON | OFF
 smarthouse/kitchen_living/living_led/set  ON | OFF
-smarthouse/entrance/outdoor_led/set       ON | OFF | AUTO
-smarthouse/entrance/door/set               OPEN
+smarthouse/entrance/outdoor_led/set       ON | OFF
+smarthouse/entrance/door/set              OPEN (not retained)
 ```
 
-States are published under the matching `.../state` topics. Sensor readings use JSON, for example `{"temp":30.0,"humidity":65.0}`. The sketch uses the `MQTT_CLIENT_ID` defined near the top of the sketch, so only one copy of this combined sketch should be connected with that client ID. `MQTT_TOPIC_PREFIX` defaults to `smarthouse` and must match Django's `MQTT_TOPIC_PREFIX`.
+States are published under the matching `.../state` topics. Sensor readings use JSON, for example `{"temp":30.0,"humidity":65.0}`. Fan reports include both its relay state and operating mode, for example `{"state":"ON","mode":"AUTO"}`. The sketch uses the `MQTT_CLIENT_ID` defined in `smarthouse/config.h`, so only one copy of this combined sketch should be connected with that client ID. `MQTT_TOPIC_PREFIX` defaults to `smarthouse` and must match Django's `MQTT_TOPIC_PREFIX`.

@@ -10,7 +10,8 @@ from .mqtt import MQTTBridge, MQTTCommandError, publish_command, topic
 
 
 class MQTTBridgeTests(TestCase):
-    def send(self, topic, payload):
+    @patch("house.mqtt.broadcast_state")
+    def send(self, topic, payload, _broadcast):
         MQTTBridge().on_message(None, None, SimpleNamespace(topic=topic, payload=payload.encode()))
 
     def test_sensor_json_state_is_persisted(self):
@@ -18,10 +19,21 @@ class MQTTBridgeTests(TestCase):
         state = DeviceState.objects.get(zone="bedroom", device="dht11")
         self.assertEqual(state.value, {"temp": 30.0, "humidity": 65.0})
 
-    @override_settings(DEBUG=True)
-    def test_local_debug_uses_in_memory_channel_layer(self):
+    def test_fan_report_controls_manual_mode(self):
+        self.send("smarthouse/bedroom/fan/state", '{"state":"ON","mode":"MANUAL"}')
+        self.assertTrue(DeviceState.objects.get(zone="bedroom", device="fan").manual_override)
+        self.send("smarthouse/bedroom/fan/state", '{"state":"OFF","mode":"AUTO"}')
+        self.assertFalse(DeviceState.objects.get(zone="bedroom", device="fan").manual_override)
+
+    def test_development_and_bridge_share_redis_channel_layer(self):
         from django.conf import settings as django_settings
-        self.assertEqual(django_settings.CHANNEL_LAYERS["default"]["BACKEND"], "channels.layers.InMemoryChannelLayer")
+        self.assertEqual(django_settings.CHANNEL_LAYERS["default"]["BACKEND"], "channels_redis.core.RedisChannelLayer")
+
+    def test_removed_sensor_topic_is_ignored(self):
+        self.send("smarthouse/kitchen_living/pir/state", "ON")
+        self.send("smarthouse/entrance/ldr/state", '{"raw":1200}')
+        self.send("smarthouse/kitchen_living/fan/state", "ON")
+        self.assertEqual(DeviceState.objects.count(), 0)
 
     def test_nfc_event_creates_an_audit_log_and_current_state(self):
         self.send("smarthouse/entrance/nfc/state", '{"tag_id":"abc123","granted":true}')
@@ -66,25 +78,43 @@ class MQTTBridgeTests(TestCase):
         client.loop_forever.assert_called_once_with(retry_first_connection=True)
 
     @patch("house.mqtt.mqtt.Client")
+    def test_bridge_clears_stale_retained_door_open(self, client_class):
+        bridge = MQTTBridge()
+        bridge.on_connect(bridge.client, None, None, 0, None)
+        client_class.return_value.publish.assert_called_once_with(
+            "smarthouse/entrance/door/set", "", qos=1, retain=True,
+        )
+
+    @patch("house.mqtt.mqtt.Client")
     @override_settings(MQTT_HOST="localhost", MQTT_PORT=1883)
     def test_command_publish_runs_network_loop_until_delivery(self, client_class):
         client = client_class.return_value
         result = client.publish.return_value
         result.rc = 0
         result.is_published.return_value = True
+        client.loop_start.side_effect = lambda: client.on_connect(client, None, None, 0, None)
 
         publish_command("bedroom", "fan", "ON")
 
-        client.connect.assert_called_once_with("localhost", 1883, keepalive=20)
+        client.connect_async.assert_called_once_with("localhost", 1883, keepalive=20)
         client.loop_start.assert_called_once_with()
         client.publish.assert_called_once_with("smarthouse/bedroom/fan/set", "ON", qos=1, retain=True)
         result.wait_for_publish.assert_called_once_with(timeout=5)
-        client.loop_stop.assert_called_once_with()
         client.disconnect.assert_called_once_with()
+        client.loop_stop.assert_called_once_with()
+
+    @patch("house.mqtt.mqtt.Client")
+    def test_door_open_command_is_not_retained(self, client_class):
+        client = client_class.return_value
+        client.loop_start.side_effect = lambda: client.on_connect(client, None, None, 0, None)
+        client.publish.return_value.rc = 0
+        client.publish.return_value.is_published.return_value = True
+        publish_command("entrance", "door", "OPEN")
+        client.publish.assert_called_once_with("smarthouse/entrance/door/set", "OPEN", qos=1, retain=False)
 
     @patch("house.mqtt.mqtt.Client")
     def test_command_publish_wraps_connection_errors(self, client_class):
-        client_class.return_value.connect.side_effect = OSError("broker password must stay private")
+        client_class.return_value.connect_async.side_effect = OSError("broker password must stay private")
 
         with self.assertLogs("house.mqtt", level="WARNING") as logs:
             with self.assertRaises(MQTTCommandError):
@@ -93,7 +123,16 @@ class MQTTBridgeTests(TestCase):
         self.assertIn("OSError", logs.output[0])
         self.assertNotIn("broker password", logs.output[0])
 
+    @patch("house.mqtt.mqtt.Client")
+    def test_broker_rejection_returns_without_publishing(self, client_class):
+        client = client_class.return_value
+        client.loop_start.side_effect = lambda: client.on_connect(client, None, None, 5, None)
+        with self.assertRaises(MQTTCommandError):
+            publish_command("bedroom", "fan", "ON")
+        client.publish.assert_not_called()
 
+
+@override_settings(SECURE_SSL_REDIRECT=False)
 class DashboardControlTests(TestCase):
     @patch("house.views.publish_nfc_authorization")
     def test_authorize_card_publishes_and_registers_card(self, publish):
@@ -111,21 +150,25 @@ class DashboardControlTests(TestCase):
         self.assertFalse(NFCRegisteredCard.objects.filter(tag_id="627084b4").exists())
 
     @patch("house.views.publish_command")
-    def test_manual_on_sets_override_but_does_not_fake_device_state(self, publish):
+    def test_manual_on_does_not_fake_device_state_or_mode(self, publish):
         response = self.client.post(reverse("control_device"), {"zone": "bedroom", "device": "fan", "command": "ON"})
         self.assertRedirects(response, reverse("dashboard"))
         publish.assert_called_once_with("bedroom", "fan", "ON")
-        fan = DeviceState.objects.get(zone="bedroom", device="fan")
-        self.assertTrue(fan.manual_override)
-        self.assertEqual(fan.value, {})
+        self.assertFalse(DeviceState.objects.filter(zone="bedroom", device="fan").exists())
 
     @patch("house.views.publish_command")
     def test_auto_releases_manual_override(self, publish):
-        DeviceState.objects.create(zone="entrance", device="outdoor_led", manual_override=True)
-        response = self.client.post(reverse("control_device"), {"zone": "entrance", "device": "outdoor_led", "command": "AUTO"})
+        DeviceState.objects.create(zone="bedroom", device="fan", manual_override=True)
+        response = self.client.post(reverse("control_device"), {"zone": "bedroom", "device": "fan", "command": "AUTO"})
         self.assertRedirects(response, reverse("dashboard"))
-        publish.assert_called_once_with("entrance", "outdoor_led", "AUTO")
-        self.assertFalse(DeviceState.objects.get(zone="entrance", device="outdoor_led").manual_override)
+        publish.assert_called_once_with("bedroom", "fan", "AUTO")
+        self.assertTrue(DeviceState.objects.get(zone="bedroom", device="fan").manual_override)
+
+    @patch("house.views.publish_command")
+    def test_removed_auto_light_mode_is_rejected(self, publish):
+        response = self.client.post(reverse("control_device"), {"zone": "entrance", "device": "outdoor_led", "command": "AUTO"})
+        self.assertEqual(response.status_code, 400)
+        publish.assert_not_called()
 
     @patch("house.views.publish_command")
     def test_door_opens_through_the_only_supported_command(self, publish):
@@ -144,7 +187,7 @@ class DashboardControlTests(TestCase):
         response = self.client.post(reverse("set_security_mode"), {"enabled": "1"})
         self.assertRedirects(response, reverse("dashboard"))
         publish.assert_called_once_with(True)
-        self.assertTrue(SystemState.objects.get(pk=1).security_mode)
+        self.assertFalse(SystemState.objects.get(pk=1).security_mode)
 
     @patch("house.views.publish_command", side_effect=MQTTCommandError("broker unavailable"))
     def test_publish_failure_does_not_expose_broker_details(self, publish):
@@ -157,6 +200,17 @@ class DashboardControlTests(TestCase):
         self.assertEqual(response.redirect_chain, [(reverse("dashboard"), 302)])
         self.assertContains(response, "Command was not sent. Check the MQTT connection and try again.")
         self.assertNotContains(response, "broker unavailable")
+
+    @patch("house.views.publish_command", side_effect=MQTTCommandError("broker unavailable"))
+    def test_ajax_publish_failure_returns_bounded_error_response(self, publish):
+        response = self.client.post(
+            reverse("control_device"),
+            {"zone": "bedroom", "device": "fan", "command": "ON"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 502)
+        self.assertTrue(response.json()["error"])
+        self.assertFalse(DeviceState.objects.filter(zone="bedroom", device="fan").exists())
 
     def test_dashboard_renders_without_any_device_reports(self):
         response = self.client.get(reverse("dashboard"))
@@ -178,6 +232,9 @@ class DashboardControlTests(TestCase):
         self.assertContains(response, 'name="device" value="door"')
         self.assertContains(response, 'name="command" value="AUTO"')
         self.assertContains(response, 'name="command" value="OPEN"')
+        self.assertNotContains(response, "Living motion")
+        self.assertNotContains(response, "Ambient light")
+        self.assertNotContains(response, "Exhaust fan")
         self.assertContains(response, 'action="/nfc/add/"')
         self.assertContains(response, 'name="tag_id"')
         self.assertContains(response, 'name="note"')

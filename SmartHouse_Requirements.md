@@ -7,13 +7,13 @@ Kitchen same room to the Living room:
 	Sensor:
 MQ2 Sensor - Smoke Sensor, it will always read for 		
 	Actuator:
-Fan - it will suck out smoke (REMOVE FROM PROTOTYPE)
+		None (shared buzzer is listed with the living area)
 
 Living Room same room to the Kitchen:
 	Sensor:
 		None
 	Actuator:
-		LED (RELAY CH-3)
+		LED (RELAY CH-2)
 		Buzzer (General Purpose)
 		
 Bedroom:
@@ -29,7 +29,7 @@ Entrance (OUTDOOR):
 		NFC Reader (For door entrance)
 	Actuator:
 		Servo Motor
-		LED (RELAY CH-2)
+		LED (RELAY CH-3)
 
 RELAY 4CH:
 	CH1: BEDROOM LED
@@ -66,7 +66,7 @@ Stack:
 	Design: Tailwind CSS
 	C++ for esp32
 	MQTT
-	PythonAnywhere for web hosting and database storage
+	Raspberry Pi with Cloudflare Tunnel for web hosting and SQLite storage
 
 Security Mode:
 Home security:
@@ -108,6 +108,4 @@ Indoor(Bedroom):
 	Trigger: IOT website
 	Action: Set Light
 	Remote: IOT website (read, set), can be on of off the LED light in the bedroom
-
-
 

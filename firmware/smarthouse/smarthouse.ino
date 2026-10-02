@@ -1,57 +1,7 @@
 #include <WiFi.h>
 
-// Local network and MQTT settings.
-#define WIFI_SSID "Shesh"
-#define WIFI_PASSWORD "POGI-AKO"
-#define MQTT_HOST "a183c6cd0d574f5ca102dee94fb9c29c.s1.eu.hivemq.cloud"
-#define MQTT_PORT 8883
-#define MQTT_USER "wadudumzaku"
-#define MQTT_PASSWORD "wadudumzaku"
-#define MQTT_CLIENT_ID "smarthouse-esp32-s3"
-#define MQTT_TOPIC_PREFIX "smarthouse"
-
-// Keep TLS enabled for HiveMQ Cloud. Set to 0 only for an isolated local broker.
-#define MQTT_TLS 1
-
-#if MQTT_TLS
-#define NTP_SERVER "pool.ntp.org"
-#define NTP_SERVER_BACKUP_1 "time.nist.gov"
-#define NTP_SERVER_BACKUP_2 "time.google.com"
-static const char MQTT_ROOT_CA[] = R"EOF(
------BEGIN CERTIFICATE-----
-MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
-TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
-cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4
-WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu
-ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY
-MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc
-h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+
-0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6U
-A5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+sW
-T8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qyH
-B5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x+UC
-B5iPNgiV5+I3lg02dZ77DnKxHZu8A/lJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUv
-KBds0pjBqAlkd25HN7rOrFleaJ1/ctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWn
-OlFuhjuefXKnEgV4We0+UXgVCwOPjdAvBbI+e0ocS3MFEvzG6uBQE3xDk3SzynTn
-jh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbw
-qHyGO0aoSCqI3Haadr8faqU9GY/rOPNk3sgrDQoo//fb4hVC1CLQJ13hef4Y53CI
-rU7m2Ys6xt0nUW7/vGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV
-HRMBAf8EBTADAQH/MB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkq
-hkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu+ILlaS/V9lZL
-ubhzEFnTIZd+50xx+7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe+GnY+EgPbk6ZGQ
-3BebYhtF8GaV0nxvwuo77x/Py9auJ/GpsMiu/X1+mvoiBOv/2X/qkSsisRcOj/KK
-NFtY2PwByVS5uCbMiogziUwthDyC3+6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5
-ORAzI4JMPJ+GslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7Ur
-TkXWStAmzOVyyghqpZXjFaH3pO3JLF+l+/+sKAIuvtd7u+Nxe5AW0wdeRlN8NwdC
-jNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4+63SM1N95R1NbdWhscdCb+ZAJzVc
-oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq
-4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U/t7y0Ff/9yi0GE44Za4rF2LN9d11TPA
-mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d
-emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
------END CERTIFICATE-----
-
-)EOF";
-#endif
+// Local Wi-Fi and MQTT credentials belong in the ignored firmware/smarthouse/config.h.
+#include "config.h"
 
 #if MQTT_TLS
 #include <WiFiClientSecure.h>
@@ -64,19 +14,16 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 #include <ESP32Servo.h>
 
 // ESP32-S3 pin map for the single-controller installation.
-// All pins below (1,2,4-18) are outside the strapping (0/3/45/46), native-USB
+// All pins below (1,4-6,9-18) are outside the strapping (0/3/45/46), native-USB
 // (19/20), and octal-flash/PSRAM (26-37) ranges, so they're safe on standard
 // ESP32-S3-DevKitC-1 / WROOM-1 boards.
 constexpr int DHT_PIN = 4;
-constexpr int BEDROOM_FAN_PIN = 5;
-constexpr int BEDROOM_LED_PIN = 6;
+constexpr int RELAY_CH4_FAN_PIN = 5;
+constexpr int RELAY_CH1_BEDROOM_LED_PIN = 6;
 constexpr int MQ2_PIN = 1;   // ADC1_CH0 -- see voltage-divider note below
-constexpr int KITCHEN_FAN_PIN = 7;
-constexpr int LIVING_PIR_PIN = 8;
-constexpr int LIVING_LED_PIN = 9;
+constexpr int RELAY_CH2_LIVING_LED_PIN = 9;
 constexpr int BUZZER_PIN = 10;
-constexpr int LDR_PIN = 2;   // ADC1_CH1 -- see voltage-divider note below
-constexpr int OUTDOOR_LED_PIN = 11;
+constexpr int RELAY_CH3_OUTDOOR_LED_PIN = 11;
 constexpr int ENTRANCE_PIR_PIN = 12;
 constexpr int SERVO_PIN = 13;
 constexpr int RFID_SS_PIN = 14;
@@ -87,21 +34,18 @@ constexpr int RFID_SCK_PIN = 18;
 
 constexpr int DHT_TYPE = DHT11;
 constexpr float FAN_THRESHOLD_C = 30.0;
-#define SERVO_ENABLED 0
+#define SERVO_ENABLED 1
 
-// --- MQ2 / LDR thresholds with hysteresis ---
+// --- MQ2 thresholds with hysteresis ---
 // NOTE: if you add a voltage divider on the MQ2 AO line (needed if your
 // module's analog output can exceed ~3.3V), these raw ADC values will shift
 // and MUST be recalibrated against your actual divider ratio.
 constexpr int SMOKE_THRESHOLD_ON = 1800;   // raw reading that trips the alarm
 constexpr int SMOKE_THRESHOLD_OFF = 1650;  // must drop below this to clear it
-constexpr int LDR_DARK_ON = 1450;          // darker than this turns the light on
-constexpr int LDR_DARK_OFF = 1600;         // brighter than this turns it back off
 
 constexpr int DOOR_OPEN_ANGLE = 90;
 constexpr int DOOR_CLOSED_ANGLE = 0;
 constexpr unsigned long DOOR_OPEN_MS = 4000;
-constexpr unsigned long BUZZER_DURATION_MS = 5000;
 constexpr unsigned long SENSOR_INTERVAL_MS = 5000;
 constexpr unsigned long REPORT_INTERVAL_MS = 10000;
 constexpr unsigned long MQTT_RETRY_INTERVAL_MS = 3000;
@@ -109,11 +53,6 @@ constexpr unsigned long WIFI_RETRY_INTERVAL_MS = 5000;
 constexpr unsigned long NTP_RETRY_INTERVAL_MS = 30000;
 constexpr unsigned long NFC_DEBOUNCE_MS = 3000;
 constexpr byte MAX_AUTHORISED_UIDS = 32;
-
-// Set to 1 if you want a tripped motion alarm to clear itself the moment the
-// PIR goes back to LOW, instead of staying latched until security mode is
-// toggled off/on. Defaults to the original latching behavior.
-#define ALARM_AUTO_CLEAR 0
 
 #if MQTT_TLS
 WiFiClientSecure mqttTransport;
@@ -127,19 +66,14 @@ Servo door;
 
 bool securityMode = false;
 bool smokeAlarm = false;
-bool livingMotionAlarm = false;
 bool entranceMotionAlarm = false;
-bool motionDetected = false;
 bool bedroomFan = false;
 bool bedroomFanManual = false;
 bool bedroomLed = false;
-bool bedroomLedManual = false;
 bool livingLed = false;
 bool outdoorLed = false;
-bool outdoorLedManual = false;
 bool buzzer = false;
 unsigned long doorClosesAt = 0;
-unsigned long buzzerStopsAt = 0;
 unsigned long lastSensorRead = 0;
 unsigned long lastReport = 0;
 unsigned long lastMqttAttempt = 0;
@@ -190,53 +124,46 @@ void publishBool(const char *zone, const char *device, bool value) {
   publishState(zone, device, value ? "ON" : "OFF");
 }
 
-void setBuzzer(bool trigger) {
-  bool shouldBuzz = smokeAlarm || motionDetected;
-  if (!shouldBuzz) {
-    if (buzzer && !buzzerStopsAt) buzzerStopsAt = millis() + BUZZER_DURATION_MS;
-    return;
-  }
-  buzzerStopsAt = 0;
-  if (!trigger && buzzer) return;
-  if (buzzer) return;
-  buzzer = true;
-  digitalWrite(BUZZER_PIN, HIGH);
-  publishBool("kitchen_living", "buzzer", true);
+void updateBuzzer() {
+  bool shouldBuzz = smokeAlarm || entranceMotionAlarm;
+  if (buzzer == shouldBuzz) return;
+  buzzer = shouldBuzz;
+  digitalWrite(BUZZER_PIN, buzzer ? HIGH : LOW);
+  publishBool("kitchen_living", "buzzer", buzzer);
 }
 
-void maintainBuzzer() {
-  if (smokeAlarm || motionDetected) {
-    buzzerStopsAt = 0;
-    return;
-  }
-  if (!buzzer || !buzzerStopsAt || (long)(millis() - buzzerStopsAt) < 0) return;
-  buzzer = false;
-  buzzerStopsAt = 0;
-  digitalWrite(BUZZER_PIN, LOW);
-  publishBool("kitchen_living", "buzzer", false);
+void writeRelay(int pin, bool on) {
+  digitalWrite(pin, on ? RELAY_ACTIVE_LEVEL : !RELAY_ACTIVE_LEVEL);
+}
+
+void publishBedroomFanState() {
+  char payload[64];
+  snprintf(payload, sizeof(payload), "{\"state\":\"%s\",\"mode\":\"%s\"}",
+           bedroomFan ? "ON" : "OFF", bedroomFanManual ? "MANUAL" : "AUTO");
+  publishState("bedroom", "fan", payload);
 }
 
 void setBedroomFan(bool on) {
   bedroomFan = on;
-  digitalWrite(BEDROOM_FAN_PIN, on ? HIGH : LOW);
-  publishBool("bedroom", "fan", on);
+  writeRelay(RELAY_CH4_FAN_PIN, on);
+  publishBedroomFanState();
 }
 
 void setBedroomLed(bool on) {
   bedroomLed = on;
-  digitalWrite(BEDROOM_LED_PIN, on ? HIGH : LOW);
+  writeRelay(RELAY_CH1_BEDROOM_LED_PIN, on);
   publishBool("bedroom", "led", on);
 }
 
 void setLivingLed(bool on) {
   livingLed = on;
-  digitalWrite(LIVING_LED_PIN, on ? HIGH : LOW);
+  writeRelay(RELAY_CH2_LIVING_LED_PIN, on);
   publishBool("kitchen_living", "living_led", on);
 }
 
 void setOutdoorLed(bool on) {
   outdoorLed = on;
-  digitalWrite(OUTDOOR_LED_PIN, on ? HIGH : LOW);
+  writeRelay(RELAY_CH3_OUTDOOR_LED_PIN, on);
   publishBool("entrance", "outdoor_led", on);
 }
 
@@ -251,12 +178,10 @@ void openDoor() {
 void handleSecurityMode(const String &value) {
   securityMode = value == "ON";
   if (!securityMode) {
-    livingMotionAlarm = false;
     entranceMotionAlarm = false;
-    publishBool("kitchen_living", "pir", false);
     publishBool("entrance", "pir", false);
     publishBool("entrance", "alarm", false);
-    setBuzzer(false);
+    updateBuzzer();
   }
   publishState("system", "security_mode", securityMode ? "ON" : "OFF");
 }
@@ -282,26 +207,29 @@ void onMessage(char *topic, byte *payload, unsigned int length) {
   }
 
   if (topicName == commandTopic("system", "security_mode")) {
-    handleSecurityMode(value);
+    if (value == "ON" || value == "OFF") handleSecurityMode(value);
   } else if (topicName == commandTopic("bedroom", "fan")) {
-    if (value == "AUTO") bedroomFanManual = false;
-    else { bedroomFanManual = true; setBedroomFan(value == "ON"); }
+    if (value == "AUTO") {
+      bedroomFanManual = false;
+      publishBedroomFanState();
+    }
+    else if (value == "ON" || value == "OFF") {
+      bedroomFanManual = true;
+      setBedroomFan(value == "ON");
+    }
   } else if (topicName == commandTopic("bedroom", "led")) {
-    if (value == "AUTO") bedroomLedManual = false;
-    else { bedroomLedManual = true; setBedroomLed(value == "ON"); }
+    if (value == "ON" || value == "OFF") setBedroomLed(value == "ON");
   } else if (topicName == commandTopic("kitchen_living", "living_led")) {
-    setLivingLed(value == "ON");
+    if (value == "ON" || value == "OFF") setLivingLed(value == "ON");
   } else if (topicName == commandTopic("entrance", "outdoor_led")) {
-    if (value == "AUTO") outdoorLedManual = false;
-    else { outdoorLedManual = true; setOutdoorLed(value == "ON"); }
+    if (value == "ON" || value == "OFF") setOutdoorLed(value == "ON");
   } else if (topicName == commandTopic("entrance", "door") && value == "OPEN") {
     openDoor();
   }
 }
 
-// Non-blocking MQTT (re)connect. Returning early instead of looping with
-// delay() keeps readMotion()/checkNfc()/door-close timing alive during an
-// outage instead of freezing the whole controller.
+// Rate-limit MQTT reconnects. PubSubClient's connect itself is synchronous,
+// so loop() defers attempts while the door is open.
 void maintainMqtt() {
   if (mqtt.connected()) return;
 #if MQTT_TLS
@@ -320,6 +248,9 @@ void maintainMqtt() {
 #endif
   if (mqtt.connect(MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD)) {
     Serial.println("MQTT connected");
+    // Delete any OPEN command retained by older backend versions before subscribing.
+    String doorCommand = commandTopic("entrance", "door");
+    mqtt.publish(doorCommand.c_str(), "", true);
     const char *topics[] = {
       "system/security_mode",
       "bedroom/fan",
@@ -336,13 +267,9 @@ void maintainMqtt() {
     String authorizationTopic = String(MQTT_TOPIC_PREFIX) + "/entrance/nfc/authorized/+/set";
     bool authorizationSubscribed = mqtt.subscribe(authorizationTopic.c_str());
     Serial.printf("MQTT subscribe %s: %s\n", authorizationTopic.c_str(), authorizationSubscribed ? "OK" : "FAILED");
-    publishState("system", "security_mode", securityMode ? "ON" : "OFF");
-    publishBool("bedroom", "fan", bedroomFan);
-    publishBool("bedroom", "led", bedroomLed);
-    publishBool("kitchen_living", "living_led", livingLed);
-    publishBool("kitchen_living", "fan", smokeAlarm);
-    publishBool("entrance", "outdoor_led", outdoorLed);
-    publishBool("kitchen_living", "buzzer", buzzer);
+    // Retained commands are the authority after reconnect. Report after they
+    // have had time to arrive, rather than briefly overwriting state with boot defaults.
+    lastReport = millis();
   } else {
     Serial.printf("MQTT connect failed, state=%d\n", mqtt.state());
   }
@@ -400,15 +327,6 @@ void checkNfc() {
   Serial.printf("RFID access: %s\n", granted ? "AUTHORIZED" : "DENIED");
   if (granted) {
     openDoor();
-    // A valid entry should silence an entrance alarm that was tripped by the
-    // same person walking up to the door -- previously the buzzer kept going
-    // after a fully legitimate entry until security mode was toggled off.
-    if (entranceMotionAlarm) {
-      entranceMotionAlarm = false;
-      publishBool("entrance", "pir", false);
-      publishBool("entrance", "alarm", false);
-      setBuzzer(false);
-    }
   }
   char payload[140];
   snprintf(payload, sizeof(payload), "{\"tag_id\":\"%s\",\"granted\":%s}", uid.c_str(), granted ? "true" : "false");
@@ -420,7 +338,9 @@ void readSensors() {
   float temperature = dht.readTemperature();
   float humidity = dht.readHumidity();
   if (!isnan(temperature) && !isnan(humidity)) {
-    if (!bedroomFanManual) setBedroomFan(temperature >= FAN_THRESHOLD_C);
+    if (!bedroomFanManual && bedroomFan != (temperature >= FAN_THRESHOLD_C)) {
+      setBedroomFan(temperature >= FAN_THRESHOLD_C);
+    }
     char payload[80];
     snprintf(payload, sizeof(payload), "{\"temp\":%.1f,\"humidity\":%.1f}", temperature, humidity);
     publishState("bedroom", "dht11", payload);
@@ -433,16 +353,8 @@ void readSensors() {
   bool smokeDetected = smokeAlarm ? (smokeRaw >= SMOKE_THRESHOLD_OFF) : (smokeRaw >= SMOKE_THRESHOLD_ON);
   if (smokeDetected != smokeAlarm) {
     smokeAlarm = smokeDetected;
-    digitalWrite(KITCHEN_FAN_PIN, smokeAlarm ? HIGH : LOW);
     publishBool("kitchen_living", "mq2", smokeAlarm);
-    publishBool("kitchen_living", "fan", smokeAlarm);
-    setBuzzer(smokeDetected);
-  }
-
-  int lightRaw = analogRead(LDR_PIN);
-  bool wantOutdoorLed = outdoorLed ? (lightRaw < LDR_DARK_OFF) : (lightRaw < LDR_DARK_ON);
-  if (!outdoorLedManual && wantOutdoorLed != outdoorLed) {
-    setOutdoorLed(wantOutdoorLed);
+    updateBuzzer();
   }
 
   Serial.println("--- Sensor readings ---");
@@ -452,10 +364,8 @@ void readSensors() {
     Serial.println("DHT11: unavailable");
   }
   Serial.printf("MQ2: raw=%d, alarm=%s\n", smokeRaw, smokeAlarm ? "ON" : "OFF");
-  Serial.printf("LDR: raw=%d, outdoor light=%s\n", lightRaw, outdoorLed ? "ON" : "OFF");
   Serial.printf(
-    "PIR: living=%s, entrance=%s, security=%s\n",
-    digitalRead(LIVING_PIR_PIN) == HIGH ? "HIGH" : "LOW",
+    "PIR: entrance=%s, security=%s\n",
     digitalRead(ENTRANCE_PIR_PIN) == HIGH ? "HIGH" : "LOW",
     securityMode ? "ON" : "OFF"
   );
@@ -465,51 +375,25 @@ void readSensors() {
     char smokePayload[64];
     snprintf(smokePayload, sizeof(smokePayload), "{\"raw\":%d,\"state\":\"%s\"}", smokeRaw, smokeAlarm ? "ON" : "OFF");
     publishState("kitchen_living", "mq2", smokePayload);
-    char lightPayload[32];
-    snprintf(lightPayload, sizeof(lightPayload), "{\"raw\":%d}", lightRaw);
-    publishState("entrance", "ldr", lightPayload);
+    publishState("system", "security_mode", securityMode ? "ON" : "OFF");
+    publishBedroomFanState();
+    publishBool("bedroom", "led", bedroomLed);
+    publishBool("kitchen_living", "living_led", livingLed);
+    publishBool("entrance", "outdoor_led", outdoorLed);
+    publishBool("kitchen_living", "buzzer", buzzer);
+    publishBool("entrance", "pir", entranceMotionAlarm);
+    publishBool("entrance", "alarm", entranceMotionAlarm);
   }
 }
 
 void readMotion() {
-  if (!securityMode) {
-    motionDetected = false;
-    setBuzzer(false);
-    return;
-  }
-
-  bool livingHigh = digitalRead(LIVING_PIR_PIN) == HIGH;
-  bool entranceHigh = digitalRead(ENTRANCE_PIR_PIN) == HIGH;
-  motionDetected = livingHigh || entranceHigh;
-  if (livingHigh && !livingMotionAlarm) {
-    livingMotionAlarm = true;
-    publishBool("kitchen_living", "pir", true);
-    setBuzzer(true);
-  }
-#if ALARM_AUTO_CLEAR
-  else if (!livingHigh && livingMotionAlarm) {
-    livingMotionAlarm = false;
-    publishBool("kitchen_living", "pir", false);
-    setBuzzer(false);
-  }
-#endif
-
-  if (entranceHigh && !entranceMotionAlarm) {
+  if (!securityMode || entranceMotionAlarm) return;
+  if (digitalRead(ENTRANCE_PIR_PIN) == HIGH) {
     entranceMotionAlarm = true;
     publishBool("entrance", "pir", true);
     publishBool("entrance", "alarm", true);
-    setBuzzer(true);
+    updateBuzzer();
   }
-#if ALARM_AUTO_CLEAR
-  else if (!entranceHigh && entranceMotionAlarm) {
-    entranceMotionAlarm = false;
-    publishBool("entrance", "pir", false);
-    publishBool("entrance", "alarm", false);
-    setBuzzer(false);
-  }
-#endif
-
-  setBuzzer(motionDetected);
 }
 
 void setup() {
@@ -520,19 +404,19 @@ void setup() {
   Serial.println("Configuring TLS certificate...");
   mqttTransport.setCACert(MQTT_ROOT_CA);
   Serial.println("TLS certificate configured");
-  mqttTransport.setHandshakeTimeout(15);
+  mqttTransport.setHandshakeTimeout(5);
 #endif
   Serial.println("Configuring pins...");
-  pinMode(BEDROOM_FAN_PIN, OUTPUT);
-  pinMode(BEDROOM_LED_PIN, OUTPUT);
-  pinMode(KITCHEN_FAN_PIN, OUTPUT);
-  pinMode(LIVING_PIR_PIN, INPUT_PULLDOWN);
-  pinMode(LIVING_LED_PIN, OUTPUT);
+  // Preload the inactive level before switching each relay GPIO to OUTPUT.
+  const int relayPins[] = {RELAY_CH1_BEDROOM_LED_PIN, RELAY_CH2_LIVING_LED_PIN,
+                           RELAY_CH3_OUTDOOR_LED_PIN, RELAY_CH4_FAN_PIN};
+  for (int pin : relayPins) {
+    digitalWrite(pin, !RELAY_ACTIVE_LEVEL);
+    pinMode(pin, OUTPUT);
+  }
   pinMode(BUZZER_PIN, OUTPUT);
-  pinMode(OUTDOOR_LED_PIN, OUTPUT);
   pinMode(ENTRANCE_PIR_PIN, INPUT_PULLDOWN);
   pinMode(MQ2_PIN, INPUT);
-  pinMode(LDR_PIN, INPUT);
   digitalWrite(BUZZER_PIN, LOW);
   Serial.println("Starting sensors and actuators...");
   dht.begin();
@@ -574,6 +458,7 @@ void setup() {
   }
 #endif
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
+  mqtt.setSocketTimeout(3);
   mqtt.setCallback(onMessage);
 }
 
@@ -581,9 +466,9 @@ void loop() {
   maintainWifi();
   if (WiFi.status() == WL_CONNECTED) {
 #if MQTT_TLS
-    maintainTlsClock();
+    if (!doorClosesAt) maintainTlsClock();
 #endif
-    maintainMqtt();
+    if (!doorClosesAt) maintainMqtt();
     mqtt.loop();
   }
 
@@ -596,7 +481,6 @@ void loop() {
     doorClosesAt = 0;
     publishState("entrance", "door", "CLOSED");
   }
-  maintainBuzzer();
   readMotion();
   checkNfc();
   if (millis() - lastSensorRead >= SENSOR_INTERVAL_MS) {

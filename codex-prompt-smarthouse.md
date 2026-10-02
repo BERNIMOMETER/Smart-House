@@ -1,5 +1,10 @@
 # Prompt for Codex — Smart House IoT/MQTT System
 
+> Historical initial build prompt. For the implemented hardware and deployment,
+> use `SmartHouse_Requirements.md`, `README.md`, and `firmware/README.md`.
+> The current prototype has one entrance PIR, no LDR or kitchen exhaust fan,
+> four on/off relay channels, and a Raspberry Pi deployment.
+
 ## Context
 Build a smart house monitoring & control system for a school project. Three physical zones are managed by one combined ESP32-S3 controller running C++ (Arduino framework) that talks to a Django backend over MQTT. Django is the single source of truth and the web dashboard; SQLite is the database; Tailwind CSS for styling; hosted on PythonAnywhere.
 

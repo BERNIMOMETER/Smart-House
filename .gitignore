@@ -14,4 +14,4 @@ staticfiles/
 .env
 .env.*
 !.env.example
-
+firmware/smarthouse/config.h

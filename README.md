@@ -6,6 +6,8 @@ This project runs a Django dashboard and one ESP32-S3 controller for the kitchen
 
 - One house-wide buzzer sounds for MQ2 smoke or the entrance PIR alarm. Disarming Security Mode clears only the PIR alarm; it cannot silence a smoke alarm.
 - The bedroom fan runs automatically at 30 C or above unless the dashboard sends `ON` or `OFF`; `AUTO` releases the override. The outdoor light is controlled manually from the dashboard.
+- Relay channels are CH1 bedroom light (GPIO 6), CH2 kitchen/living light (GPIO 9), CH3 outdoor light (GPIO 11), and CH4 bedroom fan (GPIO 5). Set `RELAY_ACTIVE_LEVEL` in the ignored `firmware/smarthouse/config.h` for the installed board. The fan uses relay on/off only.
+- The only PIR is at the entrance. There is no LDR or kitchen exhaust fan. The door `OPEN` command is an event and is never retained; other control settings are retained for reconnects.
 - A valid NFC tag or dashboard door command opens the servo for four seconds. NFC reads are retained as audit records.
 - The MQTT topic contract is unchanged. Do not rename topics when configuring HiveMQ Cloud.
 
@@ -18,7 +20,7 @@ smarthouse/system/security_mode/set
 smarthouse/system/security_mode/state
 ```
 
-Payloads are `ON`, `OFF`, `AUTO`, or `OPEN` for commands. Sensor payloads are JSON, such as `{"temp":30.0,"humidity":65.0}`. The `MQTT_TOPIC_PREFIX` setting defaults to `smarthouse`; it must be identical in Django and `firmware/config.h`.
+Payloads are `ON`, `OFF`, `AUTO`, or `OPEN` for commands. Sensor payloads are JSON, such as `{"temp":30.0,"humidity":65.0}`. The `MQTT_TOPIC_PREFIX` setting defaults to `smarthouse`; it must be identical in Django and `firmware/smarthouse/config.h`.
 
 ## Local development MQTT
 
@@ -34,6 +36,8 @@ copy .env.example .env
 python manage.py runserver
 python manage.py mqtt_bridge
 ```
+
+Set `DJANGO_DEBUG=1` and `DJANGO_SECURE_SSL_REDIRECT=0` in the local `.env`, and start Redis locally for WebSocket updates. Set the MQTT values to the same broker used by the ESP32.
 
 The bridge must remain running for device-reported state to update the
 dashboard. A command response means the MQTT broker accepted publication; the
@@ -147,7 +151,7 @@ sudo systemctl restart smarthouse-web smarthouse-mqtt
 ```
 
 The dashboard uses a WebSocket at `/ws/updates/`. Redis carries MQTT state events
-from the bridge process to ASGI web workers, so keep `redis-server` enabled:
+from the bridge process to ASGI web workers in both development and production, so keep `redis-server` enabled:
 
 ```bash
 sudo systemctl enable --now redis-server
@@ -156,9 +160,9 @@ sudo systemctl restart smarthouse-web smarthouse-mqtt
 
 ## HiveMQ Cloud and ESP32-S3
 
-Create HiveMQ Cloud credentials through Access Management. Configure its cluster hostname, port `8883`, username, and password in both the Pi environment file and the ignored `firmware/config.h`.
+Create HiveMQ Cloud credentials through Access Management. Configure its cluster hostname, port `8883`, username, and password in both the Pi environment file and the ignored `firmware/smarthouse/config.h`.
 
-For the ESP32, copy `firmware/config.example.h` to `firmware/config.h`, paste the public root CA that validates the HiveMQ cluster into `MQTT_ROOT_CA`, and keep `MQTT_TLS` set to `1`. The sketch synchronizes its certificate-validation clock through the configured NTP server, so allow outbound NTP on the ESP32 network. The sketch deliberately does not use insecure TLS. Flash `firmware/smarthouse/smarthouse.ino` after installing PubSubClient, DHT sensor library, MFRC522, and ESP32Servo; see [firmware/README.md](firmware/README.md) for the pin map.
+For the ESP32, copy `firmware/config.example.h` to `firmware/smarthouse/config.h`, paste the public root CA that validates the HiveMQ cluster into `MQTT_ROOT_CA`, and keep `MQTT_TLS` set to `1`. The sketch synchronizes its certificate-validation clock through the configured NTP server, so allow outbound NTP on the ESP32 network. The sketch deliberately does not use insecure TLS. Flash `firmware/smarthouse/smarthouse.ino` after installing PubSubClient, DHT sensor library, MFRC522, and ESP32Servo; see [firmware/README.md](firmware/README.md) for the pin map.
 
 ## Cloudflare Tunnel and access control
 
@@ -203,5 +207,7 @@ For a local non-production broker, use `DJANGO_DEBUG=1`, `MQTT_TLS=0`, and port 
 python3 manage.py mqtt_bridge
 python3 manage.py runserver
 ```
+
+Start Redis locally before these two processes. Dashboard commands wait at most five seconds for a broker connection and five seconds for its acknowledgement. If a command fails, the dashboard shows an error and keeps the reported device state until the ESP32 publishes a new report.
 
 Do not use `runserver` in production.
