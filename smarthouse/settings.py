@@ -73,7 +73,6 @@ CHANNEL_LAYERS = {
             "hosts": [{
                 "address": REDIS_URL,
                 "socket_connect_timeout": 2,
-                "socket_timeout": 2,
             }],
         },
     },

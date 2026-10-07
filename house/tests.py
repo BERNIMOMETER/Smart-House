@@ -29,6 +29,12 @@ class MQTTBridgeTests(TestCase):
         from django.conf import settings as django_settings
         self.assertEqual(django_settings.CHANNEL_LAYERS["default"]["BACKEND"], "channels_redis.core.RedisChannelLayer")
 
+    def test_redis_channel_layer_does_not_timeout_blocking_websocket_reads(self):
+        from django.conf import settings as django_settings
+        host = django_settings.CHANNEL_LAYERS["default"]["CONFIG"]["hosts"][0]
+        self.assertEqual(host["socket_connect_timeout"], 2)
+        self.assertNotIn("socket_timeout", host)
+
     def test_removed_sensor_topic_is_ignored(self):
         self.send("smarthouse/kitchen_living/pir/state", "ON")
         self.send("smarthouse/entrance/ldr/state", '{"raw":1200}')
