@@ -35,6 +35,14 @@ class MQTTBridgeTests(TestCase):
         self.assertEqual(host["socket_connect_timeout"], 2)
         self.assertNotIn("socket_timeout", host)
 
+    def test_redis_url_read_timeout_is_removed_without_losing_other_options(self):
+        from smarthouse.settings import _without_redis_socket_timeout
+        redis_url = "redis://localhost:6379/0?socket_timeout=2&health_check_interval=15"
+        self.assertEqual(
+            _without_redis_socket_timeout(redis_url),
+            "redis://localhost:6379/0?health_check_interval=15",
+        )
+
     def test_removed_sensor_topic_is_ignored(self):
         self.send("smarthouse/kitchen_living/pir/state", "ON")
         self.send("smarthouse/entrance/ldr/state", '{"raw":1200}')

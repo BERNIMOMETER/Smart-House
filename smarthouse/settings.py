@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from django.core.exceptions import ImproperlyConfigured
 
 from dotenv import load_dotenv
@@ -14,6 +15,13 @@ def env_flag(name, default=False):
 
 def env_list(name, default=""):
     return [value.strip() for value in os.environ.get(name, default).split(",") if value.strip()]
+
+
+def _without_redis_socket_timeout(redis_url):
+    parsed = urlsplit(redis_url)
+    query = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if key != "socket_timeout"]
+    return urlunsplit(parsed._replace(query=urlencode(query)))
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 # Load a developer checkout's ignored .env first, then let the production
@@ -65,7 +73,7 @@ TEMPLATES = [{
 }]
 WSGI_APPLICATION = "smarthouse.wsgi.application"
 ASGI_APPLICATION = "smarthouse.asgi.application"
-REDIS_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+REDIS_URL = _without_redis_socket_timeout(os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0"))
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
