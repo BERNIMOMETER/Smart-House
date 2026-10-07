@@ -21,13 +21,13 @@ Upload only the combined sketch for this installation.
 
 | Device | GPIO |
 | --- | ---: |
-| Bedroom DHT11 data | 4 |
-| Relay CH4: bedroom fan (on/off only) | 5 |
-| Relay CH1: bedroom LED | 6 |
+| Relay CH1: bedroom LED | 4 |
+| Relay CH2: kitchen/living LED | 5 |
+| Relay CH3: outdoor LED | 6 |
+| Relay CH4: bedroom fan (on/off only) | 7 |
+| Bedroom DHT11 data | 8 |
 | MQ2 analog output | 1 |
-| Relay CH2: kitchen/living LED | 9 |
 | Shared buzzer | 10 |
-| Relay CH3: outdoor LED | 11 |
 | Entrance PIR | 12 |
 | Door servo signal | 13 |
 | MFRC522 SDA/SS | 14 |

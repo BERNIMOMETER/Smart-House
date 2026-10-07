@@ -14,18 +14,20 @@
 #include <ESP32Servo.h>
 
 // ESP32-S3 pin map for the single-controller installation.
-// All pins below (1,4-6,9-18) are outside the strapping (0/3/45/46), native-USB
+// All pins below (1,4-18) are outside the strapping (0/3/45/46), native-USB
 // (19/20), and octal-flash/PSRAM (26-37) ranges, so they're safe on standard
 // ESP32-S3-DevKitC-1 / WROOM-1 boards.
-constexpr int DHT_PIN = 4;
-constexpr int RELAY_CH4_FAN_PIN = 5;
-constexpr int RELAY_CH1_BEDROOM_LED_PIN = 6;
+constexpr int RELAY_CH1_BEDROOM_LED_PIN = 4;
+constexpr int RELAY_CH2_LIVING_LED_PIN = 5;
+constexpr int RELAY_CH3_OUTDOOR_LED_PIN = 6;
+constexpr int RELAY_CH4_FAN_PIN = 7;
+
+constexpr int DHT_PIN = 8;
 constexpr int MQ2_PIN = 1;   // ADC1_CH0 -- see voltage-divider note below
-constexpr int RELAY_CH2_LIVING_LED_PIN = 9;
 constexpr int BUZZER_PIN = 10;
-constexpr int RELAY_CH3_OUTDOOR_LED_PIN = 11;
 constexpr int ENTRANCE_PIR_PIN = 12;
 constexpr int SERVO_PIN = 13;
+
 constexpr int RFID_SS_PIN = 14;
 constexpr int RFID_RST_PIN = 15;
 constexpr int RFID_MISO_PIN = 16;

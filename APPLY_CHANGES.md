@@ -11,11 +11,11 @@ The sketch now expects exactly these sensors and actuators:
 | Connection | ESP32-S3 GPIO | Behavior |
 | --- | ---: | --- |
 | MQ2 analog output | 1 | Smoke alert; operates even when Security Mode is off |
-| DHT11 data | 4 | Bedroom temperature and humidity |
-| Relay CH1 | 6 | Bedroom light |
-| Relay CH2 | 9 | Kitchen/living light |
-| Relay CH3 | 11 | Entrance/outdoor light |
-| Relay CH4 | 5 | Bedroom fan, on/off only |
+| Relay CH1 | 4 | Bedroom light |
+| Relay CH2 | 5 | Kitchen/living light |
+| Relay CH3 | 6 | Entrance/outdoor light |
+| Relay CH4 | 7 | Bedroom fan, on/off only |
+| DHT11 data | 8 | Bedroom temperature and humidity |
 | Shared buzzer | 10 | Smoke or entrance motion alarm |
 | Entrance PIR | 12 | Security alarm |
 | Door servo signal | 13 | Opens for four seconds |
