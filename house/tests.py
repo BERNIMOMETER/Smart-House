@@ -29,11 +29,19 @@ class MQTTBridgeTests(TestCase):
         from django.conf import settings as django_settings
         self.assertEqual(django_settings.CHANNEL_LAYERS["default"]["BACKEND"], "channels_redis.core.RedisChannelLayer")
 
-    def test_redis_channel_layer_does_not_timeout_blocking_websocket_reads(self):
+    def test_redis_channel_layer_timeout_exceeds_blocking_websocket_reads(self):
         from django.conf import settings as django_settings
+        from channels_redis.utils import create_pool
+        from smarthouse.settings import _without_redis_socket_timeout
         host = django_settings.CHANNEL_LAYERS["default"]["CONFIG"]["hosts"][0]
         self.assertEqual(host["socket_connect_timeout"], 2)
-        self.assertNotIn("socket_timeout", host)
+        self.assertEqual(host["socket_timeout"], 30)
+        pool = create_pool({
+            "address": _without_redis_socket_timeout("redis://localhost:6379/0?socket_timeout=2"),
+            "socket_connect_timeout": 2,
+            "socket_timeout": 30,
+        })
+        self.assertEqual(pool.connection_kwargs["socket_timeout"], 30)
 
     def test_redis_url_read_timeout_is_removed_without_losing_other_options(self):
         from smarthouse.settings import _without_redis_socket_timeout
