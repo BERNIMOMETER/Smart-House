@@ -60,11 +60,10 @@
             <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 font-mono text-xs font-semibold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-300">Zone 01</span>
           </div>
           <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-            <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Smoke</dt><dd data-live-state="kitchen_living/mq2" class="font-semibold {% if status.kitchen_living_mq2.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_mq2 %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_mq2.value.state|default:'No data' }}</dd></div>
             <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-950/50"><dt class="text-slate-500 dark:text-slate-400">Buzzer</dt><dd data-live-state="kitchen_living/buzzer" class="font-semibold {% if status.kitchen_living_buzzer.value.state == 'ON' %}rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400{% elif status.kitchen_living_buzzer %}text-slate-900 dark:text-slate-100{% else %}rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400{% endif %}">{{ status.kitchen_living_buzzer.value.state|default:'No data' }}</dd></div>
           </dl>
           <div class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800">
-            {% include 'house/control.html' with zone='kitchen_living' device='living_led' title='Living light (relay CH2)' state=status.kitchen_living_living_led.value.state auto=False manual_override=status.kitchen_living_living_led.manual_override %}
+            {% include 'house/control.html' with zone='kitchen_living' device='living_led' title='Lights and Fan' state=status.kitchen_living_living_led.value.state auto=False manual_override=status.kitchen_living_living_led.manual_override %}
           </div>
         </article>
 
@@ -78,7 +77,7 @@
             <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950/50"><p class="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Humidity</p><p class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100"><span data-live-field="bedroom/dht11/humidity">{{ status.bedroom_dht11.value.humidity|default:'--' }}</span><span class="ml-1 text-sm font-medium text-slate-500 dark:text-slate-400">% RH</span></p></div>
           </div>
           <div class="mt-4 space-y-4">
-            {% include 'house/control.html' with zone='bedroom' device='fan' title='Fan (relay CH4, auto at ≥ 30°C)' state=status.bedroom_fan.value.state auto=True manual_override=status.bedroom_fan.manual_override %}
+            {% include 'house/control.html' with zone='bedroom' device='fan' title='Fan for bedroom' state=status.bedroom_fan.value.state auto=True manual_override=status.bedroom_fan.manual_override %}
             {% include 'house/control.html' with zone='bedroom' device='led' title='Bedroom light (relay CH1)' state=status.bedroom_led.value.state auto=False manual_override=status.bedroom_led.manual_override %}
           </div>
         </article>
@@ -121,7 +120,6 @@
           </div>
           <div class="mt-4 flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 {% if system.security_mode %}border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400{% else %}border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300{% endif %}"><p class="font-mono text-xs font-semibold uppercase tracking-wider">Security mode</p><p data-live-state="system/security_mode" class="text-sm font-bold">{{ system.security_mode|yesno:'ARMED,DISARMED' }}</p></div>
           <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-            <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Smoke alert</dt><dd data-live-state="kitchen_living/mq2" class="font-semibold {% if status.kitchen_living_mq2.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_mq2 %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_mq2.value.state|default:'No data' }}</dd></div>
             <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Buzzer</dt><dd data-live-state="kitchen_living/buzzer" class="font-semibold {% if status.kitchen_living_buzzer.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.kitchen_living_buzzer %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.kitchen_living_buzzer.value.state|default:'No data' }}</dd></div>
             <div class="flex justify-between gap-3"><dt class="text-slate-500 dark:text-slate-400">Entrance motion</dt><dd data-live-state="entrance/pir" class="font-semibold {% if status.entrance_pir.value.state == 'ON' %}text-red-700 dark:text-red-400{% elif status.entrance_pir %}text-slate-900 dark:text-slate-100{% else %}text-amber-700 dark:text-amber-400{% endif %}">{{ status.entrance_pir.value.state|default:'No data' }}</dd></div>
           </dl>
@@ -309,7 +307,7 @@
               'bedroom/led': 'Bedroom light',
               'entrance/outdoor_led': 'Outdoor light',
               'entrance/door': 'Door',
-              'kitchen_living/living_led': 'Living light',
+              'kitchen_living/living_led': 'Lights and Fan',
             };
             const commandKey = zone && device ? `${zone}/${device}` : '';
             const friendlyMessage = form.action.endsWith('/security/')
