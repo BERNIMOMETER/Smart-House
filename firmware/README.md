@@ -9,7 +9,6 @@
    - PubSubClient
    - DHT sensor library
    - MFRC522
-   - ESP32Servo
 3. Open `smarthouse/smarthouse.ino` in Arduino IDE.
 4. Select the correct ESP32-S3 board and port.
 5. Upload the sketch. NFC authorization is managed from the website: scan a card, open the dashboard, and select **Authorize card** for its UID. The decision is sent to the ESP32 over a retained MQTT command and survives reconnects.
@@ -21,10 +20,10 @@ Upload only the combined sketch for this installation.
 
 | Device | GPIO |
 | --- | ---: |
-| Relay CH1: bedroom LED | 4 |
-| Relay CH2: kitchen/living LED | 5 |
-| Relay CH3: outdoor LED | 6 |
-| Relay CH4: bedroom fan (on/off only) | 7 |
+| Relay CH1: bedroom fan | 4 |
+| Relay CH2: outdoor LED | 5 |
+| Relay CH3: kitchen/living LED | 6 |
+| Relay CH4: bedroom LED | 7 |
 | Bedroom DHT11 data | 8 |
 | MQ2 analog output | 1 |
 | Shared buzzer | 10 |
@@ -36,11 +35,15 @@ Upload only the combined sketch for this installation.
 | MFRC522 MOSI | 17 |
 | MFRC522 SCK | 18 |
 
-The relay pin constants are at the top of the sketch. Most relay boards are active LOW; `RELAY_ACTIVE_LEVEL` in `smarthouse/config.h` selects the installed board's polarity. Change pins to match physical wiring before uploading. Power the MQ2, servo, and buzzer from suitable supplies; share ground with the ESP32-S3 and do not feed a 5 V signal into an ESP32 input.
+The relay pin constants are at the top of the sketch. Most relay boards are active LOW; `RELAY_ACTIVE_LEVEL` in `smarthouse/config.h` selects the installed board's polarity. Change pins to match physical wiring before uploading. Power the MQ2, servo, and buzzer from suitable supplies; share the servo supply ground with the ESP32-S3 ground, and do not feed a 5 V signal into an ESP32 input. Do not power a servo from an ESP32 GPIO pin or the 3.3 V rail.
+
+The servo uses the ESP32-S3's native LEDC PWM. Keep its resolution at 14 bits or lower; the S3 cannot attach LEDC at 16-bit resolution, even though GPIO 13 is a valid output pin.
+
+When `DHT_READ_ENABLED` is `1`, connect the DHT11 VCC to 3.3 V, GND to ESP32-S3 GND, and DATA to GPIO 8. Use a 4.7-10 kOhm pull-up from DATA to 3.3 V. If the first DHT read fails, the firmware disables further DHT reads until reboot so a missing or miswired sensor cannot reset the controller.
 
 ## Runtime behavior
 
-- The bedroom fan follows DHT11 temperature at 30 C or above until the website sends `ON` or `OFF`; `AUTO` releases that override.
+- The bedroom fan is on Relay CH1 and follows DHT11 temperature at 30 C or above when DHT reads are enabled; website `ON` or `OFF` selects manual mode, and `AUTO` releases that override.
 - MQ2 smoke turns on the shared buzzer. Smoke remains an active alarm independently of Security Mode.
 - The entrance PIR latches its security alarm while Security Mode is on. Turning Security Mode off clears the motion alarm and the buzzer it caused.
 - The outdoor light is controlled by website `ON`/`OFF` commands only.

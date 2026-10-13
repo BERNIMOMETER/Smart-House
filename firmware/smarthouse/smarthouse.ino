@@ -58,16 +58,15 @@
     #include <DHT.h>
     #include <SPI.h>
     #include <MFRC522.h>
-    #include <ESP32Servo.h>
 
     // ESP32-S3 pin map for the single-controller installation.
     // All pins below (1,4-18) are outside the strapping (0/3/45/46), native-USB
     // (19/20), and octal-flash/PSRAM (26-37) ranges, so they're safe on standard
     // ESP32-S3-DevKitC-1 / WROOM-1 boards.
-    constexpr int RELAY_CH1_BEDROOM_LED_PIN = 4;
-    constexpr int RELAY_CH2_LIVING_LED_PIN = 5;
-    constexpr int RELAY_CH3_OUTDOOR_LED_PIN = 6;
-    constexpr int RELAY_CH4_FAN_PIN = 7;
+    constexpr int RELAY_CH1_BEDROOM_FAN_PIN = 4;
+    constexpr int RELAY_CH2_OUTDOOR_LED_PIN = 5;
+    constexpr int RELAY_CH3_LIVING_LED_PIN = 6;
+    constexpr int RELAY_CH4_BEDROOM_LED_PIN = 7;
 
     constexpr int DHT_PIN = 8;
     constexpr int MQ2_PIN = 1;   // ADC1_CH0 -- see voltage-divider note below
@@ -83,8 +82,12 @@
 
     constexpr int DHT_TYPE = DHT11;
     constexpr float FAN_THRESHOLD_C = 30.0;
+    constexpr uint32_t SERVO_PWM_FREQUENCY_HZ = 50;
+    // ESP32-S3 LEDC timers support a maximum resolution of 14 bits.
+    constexpr uint8_t SERVO_PWM_RESOLUTION_BITS = 14;
     #define DHT_READ_ENABLED 0
-    #define SERVO_ENABLED 0
+  
+    #define SERVO_ENABLED 1
 
     // --- MQ2 thresholds with hysteresis ---
     // NOTE: if you add a voltage divider on the MQ2 AO line (needed if your
@@ -113,7 +116,7 @@
     PubSubClient mqtt(mqttTransport);
     DHT dht(DHT_PIN, DHT_TYPE);
     MFRC522 rfid(RFID_SS_PIN, RFID_RST_PIN);
-    Servo door;
+    bool doorServoReady = false;
 
     struct PendingMqttPublish {
       char topic[160];
@@ -133,6 +136,7 @@
     bool livingLed = false;
     bool outdoorLed = false;
     bool buzzer = false;
+    bool dhtReadFault = false;
     unsigned long doorClosesAt = 0;
     unsigned long lastSensorRead = 0;
     unsigned long lastReport = 0;
@@ -231,7 +235,32 @@
     }
 
     void writeRelay(int pin, bool on) {
-      digitalWrite(pin, on ? RELAY_ACTIVE_LEVEL : !RELAY_ACTIVE_LEVEL);
+      int outputLevel = on ? RELAY_ACTIVE_LEVEL : !RELAY_ACTIVE_LEVEL;
+      digitalWrite(pin, outputLevel);
+      Serial.printf(
+        "Relay GPIO%d command=%s output=%s active=%s\n",
+        pin,
+        on ? "ON" : "OFF",
+        digitalRead(pin) == HIGH ? "HIGH" : "LOW",
+        RELAY_ACTIVE_LEVEL == HIGH ? "HIGH" : "LOW"
+      );
+    }
+
+    void writeDoorAngle(int angle) {
+      if (!doorServoReady) return;
+      if (angle < 0) angle = 0;
+      if (angle > 180) angle = 180;
+      uint32_t pulseWidthUs = 500 + (static_cast<uint32_t>(angle) * 2000) / 180;
+      constexpr uint32_t periodUs = 1000000 / SERVO_PWM_FREQUENCY_HZ;
+      constexpr uint32_t maxDuty = (1UL << SERVO_PWM_RESOLUTION_BITS) - 1;
+      uint32_t duty = (pulseWidthUs * maxDuty + periodUs / 2) / periodUs;
+      if (!ledcWrite(SERVO_PIN, duty)) {
+        Serial.println("Servo PWM write failed");
+      } else {
+        Serial.printf("Servo angle: %d deg, pulse: %lu us, duty: %lu\n",
+                      angle, static_cast<unsigned long>(pulseWidthUs),
+                      static_cast<unsigned long>(duty));
+      }
     }
 
     void publishBedroomFanState() {
@@ -243,31 +272,32 @@
 
     void setBedroomFan(bool on) {
       bedroomFan = on;
-      writeRelay(RELAY_CH4_FAN_PIN, on);
+      writeRelay(RELAY_CH1_BEDROOM_FAN_PIN, on);
       publishBedroomFanState();
     }
 
     void setBedroomLed(bool on) {
       bedroomLed = on;
-      writeRelay(RELAY_CH1_BEDROOM_LED_PIN, on);
+      writeRelay(RELAY_CH4_BEDROOM_LED_PIN, on);
       publishBool("bedroom", "led", on);
     }
 
     void setLivingLed(bool on) {
       livingLed = on;
-      writeRelay(RELAY_CH2_LIVING_LED_PIN, on);
+      writeRelay(RELAY_CH3_LIVING_LED_PIN, on);
       publishBool("kitchen_living", "living_led", on);
     }
 
     void setOutdoorLed(bool on) {
       outdoorLed = on;
-      writeRelay(RELAY_CH3_OUTDOOR_LED_PIN, on);
+      writeRelay(RELAY_CH2_OUTDOOR_LED_PIN, on);
       publishBool("entrance", "outdoor_led", on);
     }
 
     void openDoor() {
     #if SERVO_ENABLED
-      door.write(DOOR_OPEN_ANGLE);
+      Serial.println("Door open command accepted");
+      writeDoorAngle(DOOR_OPEN_ANGLE);
     #endif
       doorClosesAt = millis() + DOOR_OPEN_MS;
       publishState("entrance", "door", "OPEN");
@@ -446,14 +476,24 @@
       float temperature = NAN;
       float humidity = NAN;
     #if DHT_READ_ENABLED
-      pinMode(DHT_PIN, INPUT_PULLUP);
-      if (digitalRead(DHT_PIN) == HIGH) {
-        temperature = dht.readTemperature();
-        humidity = dht.readHumidity();
-      } else {
-        Serial.println("DHT data line is stuck LOW; skipping sensor read");
+      if (!dhtReadFault) {
+        pinMode(DHT_PIN, INPUT_PULLUP);
+        if (digitalRead(DHT_PIN) == HIGH) {
+          temperature = dht.readTemperature();
+          humidity = dht.readHumidity();
+        } else {
+          Serial.println("DHT data line is stuck LOW; skipping sensor read");
+        }
       }
     #endif
+      if (isnan(temperature) || isnan(humidity)) {
+        #if DHT_READ_ENABLED
+        if (!dhtReadFault) {
+          dhtReadFault = true;
+          Serial.println("DHT11 read failed; disabling DHT reads until reboot");
+        }
+        #endif
+      }
       if (!isnan(temperature) && !isnan(humidity)) {
         if (!bedroomFanManual && bedroomFan != (temperature >= FAN_THRESHOLD_C)) {
           setBedroomFan(temperature >= FAN_THRESHOLD_C);
@@ -529,11 +569,12 @@
     #endif
       Serial.println("Configuring pins...");
       // Preload the inactive level before switching each relay GPIO to OUTPUT.
-      const int relayPins[] = {RELAY_CH1_BEDROOM_LED_PIN, RELAY_CH2_LIVING_LED_PIN,
-                              RELAY_CH3_OUTDOOR_LED_PIN, RELAY_CH4_FAN_PIN};
+      const int relayPins[] = {RELAY_CH1_BEDROOM_FAN_PIN, RELAY_CH2_OUTDOOR_LED_PIN,
+                              RELAY_CH3_LIVING_LED_PIN, RELAY_CH4_BEDROOM_LED_PIN};
       for (int pin : relayPins) {
         digitalWrite(pin, !RELAY_ACTIVE_LEVEL);
         pinMode(pin, OUTPUT);
+        writeRelay(pin, false);
       }
       pinMode(BUZZER_PIN, OUTPUT);
       pinMode(ENTRANCE_PIR_PIN, INPUT_PULLDOWN);
@@ -543,12 +584,10 @@
       dht.begin();
       Serial.println("DHT initialized");
     #if SERVO_ENABLED
-      door.setPeriodHertz(50);
-      Serial.println("Servo frequency configured");
-      door.attach(SERVO_PIN);
-      Serial.println("Servo attached");
-      door.write(DOOR_CLOSED_ANGLE);
-      Serial.println("Servo position set");
+        Serial.println("Configuring servo PWM...");
+        doorServoReady = ledcAttach(SERVO_PIN, SERVO_PWM_FREQUENCY_HZ, SERVO_PWM_RESOLUTION_BITS);
+        Serial.printf("Servo PWM attach: %s\n", doorServoReady ? "OK" : "FAILED");
+        writeDoorAngle(DOOR_CLOSED_ANGLE);
     #else
       Serial.println("Servo disabled until hardware is connected");
     #endif
@@ -605,7 +644,7 @@
       // the one wraparound window every ~49 days of uptime.
       if (doorClosesAt && (long)(millis() - doorClosesAt) >= 0) {
     #if SERVO_ENABLED
-        door.write(DOOR_CLOSED_ANGLE);
+      writeDoorAngle(DOOR_CLOSED_ANGLE);
     #endif
         doorClosesAt = 0;
         publishState("entrance", "door", "CLOSED");
